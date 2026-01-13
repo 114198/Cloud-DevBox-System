@@ -12,15 +12,16 @@ import (
 	"github.com/cloud-devbox/services/container/internal/models"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
 // RateLimitError represents a rate limit exceeded error (HTTP 429)
 type RateLimitError struct {
-	Message     string
-	Limit       int
-	Window      time.Duration
-	RetryAfter  time.Duration
+	Message      string
+	Limit        int
+	Window       time.Duration
+	RetryAfter   time.Duration
 	CurrentCount int
 }
 
@@ -52,10 +53,10 @@ type EnvironmentService struct {
 
 // RateLimiter implements a sliding window rate limiter
 type RateLimiter struct {
-	mu       sync.Mutex
-	counts   map[string][]time.Time
-	limit    int
-	window   time.Duration
+	mu     sync.Mutex
+	counts map[string][]time.Time
+	limit  int
+	window time.Duration
 }
 
 // NewRateLimiter creates a new rate limiter
@@ -157,10 +158,10 @@ func (r *RateLimiter) GetCount(key string) int {
 
 // EnvironmentServiceConfig holds configuration for the environment service
 type EnvironmentServiceConfig struct {
-	Namespace            string
-	DefaultImage         string
-	CreationRateLimit    int
-	CreationRateWindow   time.Duration
+	Namespace          string
+	DefaultImage       string
+	CreationRateLimit  int
+	CreationRateWindow time.Duration
 }
 
 // DefaultEnvironmentServiceConfig returns default configuration
@@ -213,7 +214,7 @@ func (s *EnvironmentService) Create(ctx context.Context, userID string, req *mod
 			zap.Int("currentCount", rateLimitResult.CurrentCount),
 			zap.Int("limit", rateLimitResult.Limit),
 			zap.Duration("retryAfter", rateLimitResult.RetryAfter))
-		
+
 		return nil, &RateLimitError{
 			Message:      fmt.Sprintf("rate limit exceeded: maximum %d environments per hour, please try again later", rateLimitResult.Limit),
 			Limit:        rateLimitResult.Limit,
@@ -391,7 +392,7 @@ func (s *EnvironmentService) Delete(ctx context.Context, userID, id string) erro
 
 	// Delete DevBox CR
 	devbox := s.environmentToDevBox(env, "")
-	devbox.DeletionTimestamp = &time.Time{}
+	devbox.DeletionTimestamp = &metav1.Time{Time: time.Now()}
 	if err := s.controller.Reconcile(ctx, devbox); err != nil {
 		s.logger.Error("Failed to delete DevBox", zap.Error(err))
 	}

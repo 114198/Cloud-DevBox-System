@@ -3,6 +3,7 @@ import type { FormListFieldData, FormListOperation } from 'antd/es/form/FormList
 import { PlusOutlined, MinusCircleOutlined, InfoCircleOutlined } from '@ant-design/icons'
 import { useState, useEffect } from 'react'
 import { Template } from '@/services/template'
+import { environmentService } from '@/services/environment'
 import { useNavigate } from 'react-router-dom'
 
 interface TemplateConfigModalProps {
@@ -98,34 +99,34 @@ export default function TemplateConfigModal({ visible, template, onClose }: Temp
       const values = await form.validateFields()
       setIsSubmitting(true)
 
-      // Transform environment array to object
-      const environmentObj: Record<string, string> = {}
-      values.environment?.forEach((env: { key: string; value: string }) => {
-        if (env.key && env.value) {
-          environmentObj[env.key] = env.value
-        }
-      })
+      if (!template?.id) {
+        throw new Error('缺少模板信息，无法创建环境')
+      }
 
-      // Prepare the create environment request
-      const createRequest = {
+      const environmentVars =
+        values.environment
+          ?.filter((env: { key: string; value: string }) => env.key && env.value)
+          .map((env: { key: string; value: string }) => ({
+            name: env.key,
+            value: env.value,
+          })) || []
+
+      const ports = values.ports?.filter((p) => p.containerPort) || []
+
+      await environmentService.create({
         name: values.name,
         description: values.description,
-        templateId: template?.id,
-        config: {
+        templateId: template.id,
+        resources: {
           cpu: values.resources.cpu,
           memory: values.resources.memory,
           storage: values.resources.storage,
-          environment: environmentObj,
-          ports: values.ports?.filter((p) => p.containerPort) || [],
         },
-      }
+        environment: environmentVars,
+        ports,
+      })
 
-      console.log('Creating environment with config:', createRequest)
-      
-      // TODO: Call API to create environment
-      // await environmentService.create(createRequest)
-      
-      message.success('环境创建请求已提交')
+      message.success('环境创建成功')
       onClose()
       navigate('/environments')
     } catch (error) {

@@ -3,6 +3,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/cloud-devbox/services/realtime/internal/models"
 	"github.com/cloud-devbox/services/realtime/internal/services"
@@ -56,8 +57,10 @@ func (h *CollaborationHandler) HandleWebSocket(c *gin.Context) {
 		return
 	}
 
-	// TODO: Validate token
-	_ = token
+	if err := validateAccessToken(token); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
 
 	// Upgrade to WebSocket
 	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
@@ -203,10 +206,14 @@ func (h *CollaborationHandler) GetSessionHistory(c *gin.Context) {
 	offset := 0
 
 	if l := c.Query("limit"); l != "" {
-		// Parse limit
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 {
+			limit = parsed
+		}
 	}
 	if o := c.Query("offset"); o != "" {
-		// Parse offset
+		if parsed, err := strconv.Atoi(o); err == nil && parsed >= 0 {
+			offset = parsed
+		}
 	}
 
 	history := h.collabService.GetSessionHistory(sessionID, limit, offset)

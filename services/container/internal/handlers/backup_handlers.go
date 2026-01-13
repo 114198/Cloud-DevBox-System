@@ -33,15 +33,6 @@ func NewBackupHandler(
 	}
 }
 
-// getUserID extracts user ID from context (in production, from JWT)
-func getUserID(c *gin.Context) string {
-	userID := c.GetHeader("X-User-ID")
-	if userID == "" {
-		userID = "anonymous"
-	}
-	return userID
-}
-
 // CreateCodeBackup creates a new code backup
 func (h *BackupHandler) CreateCodeBackup(c *gin.Context) {
 	var req models.CreateBackupRequest
@@ -264,7 +255,6 @@ func (h *BackupHandler) GetConfigBackupStats(c *gin.Context) {
 
 	c.JSON(http.StatusOK, stats)
 }
-
 
 // CreateDatabaseBackup creates a database backup
 func (h *BackupHandler) CreateDatabaseBackup(c *gin.Context) {

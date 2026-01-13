@@ -14,13 +14,12 @@ import (
 	"time"
 
 	"github.com/cloud-devbox/services/container/internal/models"
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
 // MonitoringServiceConfig holds configuration for the monitoring service
 type MonitoringServiceConfig struct {
-	PrometheusURL     string
+	PrometheusURL      string
 	AlertCheckInterval time.Duration
 	MetricsRetention   time.Duration
 }
@@ -34,21 +33,20 @@ func DefaultMonitoringServiceConfig() *MonitoringServiceConfig {
 	}
 }
 
-
 // MonitoringService handles monitoring and alerting operations
 type MonitoringService struct {
-	config         *MonitoringServiceConfig
-	logger         *zap.Logger
-	httpClient     *http.Client
-	envService     *EnvironmentService
-	alertService   *AlertService
+	config       *MonitoringServiceConfig
+	logger       *zap.Logger
+	httpClient   *http.Client
+	envService   *EnvironmentService
+	alertService *AlertService
 
 	// In-memory cache for metrics (in production, use time-series DB)
-	metricsCache   map[string][]models.EnvironmentMetrics
-	metricsMu      sync.RWMutex
+	metricsCache map[string][]models.EnvironmentMetrics
+	metricsMu    sync.RWMutex
 
 	// Stop channel for background workers
-	stopCh         chan struct{}
+	stopCh chan struct{}
 }
 
 // NewMonitoringService creates a new monitoring service
@@ -86,7 +84,6 @@ func (s *MonitoringService) Stop() {
 	close(s.stopCh)
 	s.logger.Info("Monitoring service stopped")
 }
-
 
 // GetMetrics returns current metrics for an environment
 func (s *MonitoringService) GetMetrics(ctx context.Context, environmentID string) (*models.EnvironmentMetrics, error) {
@@ -143,7 +140,6 @@ func (s *MonitoringService) GetMetricsHistory(ctx context.Context, req *models.G
 	return history, nil
 }
 
-
 // fetchMetricsFromPrometheus fetches current metrics from Prometheus
 func (s *MonitoringService) fetchMetricsFromPrometheus(ctx context.Context, environmentID string) (*models.EnvironmentMetrics, error) {
 	metrics := &models.EnvironmentMetrics{
@@ -190,7 +186,6 @@ func (s *MonitoringService) fetchMetricsFromPrometheus(ctx context.Context, envi
 
 	return metrics, nil
 }
-
 
 // queryPrometheus executes a PromQL query
 func (s *MonitoringService) queryPrometheus(ctx context.Context, query string) ([]float64, error) {
@@ -241,7 +236,6 @@ func (s *MonitoringService) queryPrometheus(ctx context.Context, query string) (
 
 	return values, nil
 }
-
 
 // fetchHistoryFromPrometheus fetches historical metrics from Prometheus
 func (s *MonitoringService) fetchHistoryFromPrometheus(ctx context.Context, environmentID string, start, end time.Time, step string) (*models.MetricsHistory, error) {
@@ -335,18 +329,17 @@ func (s *MonitoringService) queryPrometheusRange(ctx context.Context, query stri
 	return dataPoints, nil
 }
 
-
 // generateSimulatedMetrics generates simulated metrics for development
 func (s *MonitoringService) generateSimulatedMetrics(environmentID string) *models.EnvironmentMetrics {
 	// Generate realistic-looking metrics with some randomness
 	baseTime := time.Now()
-	
+
 	// Use environment ID hash for consistent base values
 	hash := 0
 	for _, c := range environmentID {
 		hash += int(c)
 	}
-	
+
 	baseCPU := 30.0 + float64(hash%40)
 	baseMemory := 40.0 + float64(hash%30)
 	baseStorage := 20.0 + float64(hash%50)
@@ -358,10 +351,10 @@ func (s *MonitoringService) generateSimulatedMetrics(environmentID string) *mode
 		CPUCores:       1.0 + rand.Float64()*0.5,
 		CPULimit:       2.0,
 		MemoryUsage:    baseMemory + (rand.Float64()-0.5)*15,
-		MemoryUsed:     int64((baseMemory/100) * 2 * 1024 * 1024 * 1024),
+		MemoryUsed:     int64((baseMemory / 100) * 2 * 1024 * 1024 * 1024),
 		MemoryLimit:    2 * 1024 * 1024 * 1024, // 2GB
 		StorageUsage:   baseStorage + (rand.Float64()-0.5)*10,
-		StorageUsed:    int64((baseStorage/100) * 10 * 1024 * 1024 * 1024),
+		StorageUsed:    int64((baseStorage / 100) * 10 * 1024 * 1024 * 1024),
 		StorageLimit:   10 * 1024 * 1024 * 1024, // 10GB
 		NetworkRxBytes: int64(rand.Float64() * 100 * 1024 * 1024),
 		NetworkTxBytes: int64(rand.Float64() * 50 * 1024 * 1024),
@@ -400,7 +393,6 @@ func (s *MonitoringService) getHistoryFromCache(environmentID string, start, end
 	return history
 }
 
-
 // generateSimulatedHistory generates simulated historical metrics
 func (s *MonitoringService) generateSimulatedHistory(environmentID string, start, end time.Time) *models.MetricsHistory {
 	history := &models.MetricsHistory{
@@ -418,7 +410,7 @@ func (s *MonitoringService) generateSimulatedHistory(environmentID string, start
 	for _, c := range environmentID {
 		hash += int(c)
 	}
-	
+
 	baseCPU := 30.0 + float64(hash%40)
 	baseMemory := 40.0 + float64(hash%30)
 	baseStorage := 20.0 + float64(hash%50)
@@ -494,7 +486,6 @@ func (s *MonitoringService) collectAllMetrics(ctx context.Context) {
 		}
 	}
 }
-
 
 // checkAlertsLoop periodically checks for alert conditions
 func (s *MonitoringService) checkAlertsLoop(ctx context.Context) {

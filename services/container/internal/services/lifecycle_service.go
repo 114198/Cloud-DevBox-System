@@ -2,8 +2,12 @@
 package services
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -175,7 +179,7 @@ func (s *LifecycleService) checkEnvironment(env *models.Environment) *models.Lif
 		}
 
 		inactiveDuration := now.Sub(*lastActivity)
-		
+
 		// Check if we should send notification
 		notifyThreshold := s.config.AutoStopInactivityDuration - s.config.NotificationLeadTime
 		if inactiveDuration >= notifyThreshold && inactiveDuration < s.config.AutoStopInactivityDuration {
@@ -194,13 +198,13 @@ func (s *LifecycleService) checkEnvironment(env *models.Environment) *models.Lif
 		// If no response within 24 hours, auto-delete
 		if env.StoppedAt != nil {
 			stoppedDuration := now.Sub(*env.StoppedAt)
-			
+
 			// Check if there's already a pending delete confirmation
 			if s.HasPendingDeleteConfirmation(env.ID) {
 				// Don't send another notification, the pending delete check will handle it
 				return result
 			}
-			
+
 			// Check if we should send notification (24h before the 7-day mark)
 			notifyThreshold := s.config.AutoDeleteStoppedDuration - s.config.NotificationLeadTime
 			if stoppedDuration >= notifyThreshold && stoppedDuration < s.config.AutoDeleteStoppedDuration {
@@ -219,7 +223,7 @@ func (s *LifecycleService) checkEnvironment(env *models.Environment) *models.Lif
 		// Check for auto-archive after being suspended
 		if env.StoppedAt != nil {
 			suspendedDuration := now.Sub(*env.StoppedAt)
-			
+
 			notifyThreshold := s.config.AutoArchiveSuspendedDuration - s.config.NotificationLeadTime
 			if suspendedDuration >= notifyThreshold && suspendedDuration < s.config.AutoArchiveSuspendedDuration {
 				result.Action = models.LifecycleActionNotifyAutoArchive
@@ -372,8 +376,45 @@ func (s *LifecycleService) processNotification(notification *models.LifecycleNot
 		zap.String("type", string(notification.Type)),
 		zap.String("message", notification.Message))
 
-	// TODO: Implement actual notification sending (email, webhook, etc.)
-	// This would integrate with a notification service
+	webhookURL := os.Getenv("LIFECYCLE_NOTIFICATION_WEBHOOK_URL")
+	if webhookURL == "" {
+		return
+	}
+
+	payload := map[string]interface{}{
+		"environmentId": notification.EnvironmentID,
+		"userId":        notification.UserID,
+		"type":          notification.Type,
+		"message":       notification.Message,
+		"createdAt":     notification.CreatedAt,
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		s.logger.Error("Failed to marshal notification payload", zap.Error(err))
+		return
+	}
+
+	req, err := http.NewRequest(http.MethodPost, webhookURL, bytes.NewReader(body))
+	if err != nil {
+		s.logger.Error("Failed to create webhook request", zap.Error(err))
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		s.logger.Error("Failed to send webhook notification", zap.Error(err))
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		s.logger.Warn("Notification webhook returned non-success status",
+			zap.Int("status", resp.StatusCode),
+			zap.String("environmentId", notification.EnvironmentID))
+	}
 }
 
 // TransitionEnvironment transitions an environment to a new phase
@@ -413,7 +454,7 @@ func (s *LifecycleService) GetLifecycleStatus(env *models.Environment) *Lifecycl
 		if lastActivity == nil {
 			lastActivity = &env.CreatedAt
 		}
-		
+
 		inactiveDuration := now.Sub(*lastActivity)
 		remaining := s.config.AutoStopInactivityDuration - inactiveDuration
 		if remaining > 0 {
@@ -459,7 +500,6 @@ type LifecycleStatus struct {
 	TimeUntilAutoDelete  *time.Duration            `json:"timeUntilAutoDelete,omitempty"`
 	TimeUntilAutoArchive *time.Duration            `json:"timeUntilAutoArchive,omitempty"`
 }
-
 
 // RequestDeleteConfirmation sends a delete confirmation request
 func (s *LifecycleService) RequestDeleteConfirmation(environmentID, userID string) {
@@ -510,7 +550,7 @@ func (s *LifecycleService) ConfirmKeepEnvironment(environmentID string) error {
 func (s *LifecycleService) CheckPendingDeletes(ctx context.Context) {
 	s.deleteMu.Lock()
 	now := time.Now()
-	
+
 	// Collect environments to delete and their confirmations
 	type deleteInfo struct {
 		envID        string
