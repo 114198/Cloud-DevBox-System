@@ -1,0 +1,29 @@
+#!/bin/bash
+# Cloud DevBox Debian Post-Installation Script
+
+set -e
+
+# Update desktop database
+if command -v update-desktop-database &> /dev/null; then
+    update-desktop-database -q /usr/share/applications || true
+fi
+
+# Update icon cache
+if command -v gtk-update-icon-cache &> /dev/null; then
+    gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor || true
+fi
+
+# Update MIME database
+if command -v update-mime-database &> /dev/null; then
+    update-mime-database /usr/share/mime || true
+fi
+
+# Register URL handler
+if command -v xdg-mime &> /dev/null; then
+    xdg-mime default cloud-devbox.desktop x-scheme-handler/devbox || true
+fi
+
+echo "Cloud DevBox has been installed successfully!"
+echo "You can launch it from your application menu or by running 'cloud-devbox'"
+
+exit 0

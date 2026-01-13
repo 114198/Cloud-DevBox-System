@@ -1,0 +1,1643 @@
+openapi: 3.0.3
+info:
+  title: Cloud DevBox API
+  description: |
+    Cloud DevBox 是一个云端开发环境平台，提供完整的 RESTful API 用于管理开发环境、模板、部署、协作等功能。
+    
+    ## 认证方式
+    
+    API 支持两种认证方式：
+    
+    1. **JWT Token** - 用于 Web 应用和桌面客户端
+       - 通过 `/api/v1/auth/login` 获取 token
+       - 在请求头中添加 `Authorization: Bearer <token>`
+    
+    2. **API Key** - 用于程序化访问和 CI/CD 集成
+       - 通过 Web 控制台或 API 创建 API Key
+       - 在请求头中添加 `X-API-Key: <api_key>`
+    
+    ## 速率限制
+    
+    - 默认限制：1000 次/小时/用户
+    - 超出限制返回 429 状态码
+    - 响应头包含 `X-RateLimit-Remaining` 和 `X-RateLimit-Reset`
+    
+    ## 错误处理
+    
+    所有错误响应遵循统一格式：
+    ```json
+    {
+      "code": "ERROR_CODE",
+      "message": "Human readable message",
+      "details": {},
+      "request_id": "uuid",
+      "timestamp": "2026-01-13T00:00:00Z"
+    }
+    ```
+  version: 1.0.0
+  contact:
+    name: Cloud DevBox Team
+    email: support@clouddevbox.io
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.clouddevbox.io/api/v1
+    description: Production server
+  - url: https://staging-api.clouddevbox.io/api/v1
+    description: Staging server
+  - url: http://localhost:8080/api/v1
+    description: Local development
+
+tags:
+  - name: Authentication
+    description: 用户认证和授权
+  - name: Users
+    description: 用户管理
+  - name: Environments
+    description: 开发环境管理
+  - name: Templates
+    description: 环境模板管理
+  - name: Deployments
+    description: 部署管理
+  - name: Collaboration
+    description: 实时协作
+  - name: Git
+    description: Git 集成
+  - name: API Keys
+    description: API 密钥管理
+  - name: Webhooks
+    description: Webhook 订阅管理
+  - name: Monitoring
+    description: 监控和告警
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+paths:
+  # ============================================================================
+  # Authentication
+  # ============================================================================
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: 用户注册
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: 注册成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: 用户登录
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: 刷新 Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+              required: [refresh_token]
+      responses:
+        '200':
+          description: Token 刷新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: 用户登出
+      responses:
+        '204':
+          description: 登出成功
+
+  /auth/oauth/{provider}:
+    get:
+      tags: [Authentication]
+      summary: OAuth 登录
+      security: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [github, gitlab, gitee, bitbucket]
+      responses:
+        '302':
+          description: 重定向到 OAuth 提供商
+
+  # ============================================================================
+  # Users
+  # ============================================================================
+  /users/me:
+    get:
+      tags: [Users]
+      summary: 获取当前用户信息
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    put:
+      tags: [Users]
+      summary: 更新当前用户信息
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  # ============================================================================
+  # Environments
+  # ============================================================================
+  /environments:
+    get:
+      tags: [Environments]
+      summary: 列出环境
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [creating, running, stopped, failed, suspended, archived]
+        - name: template_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEnvironments'
+    post:
+      tags: [Environments]
+      summary: 创建环境
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEnvironmentRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Environment'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /environments/{id}:
+    get:
+      tags: [Environments]
+      summary: 获取环境详情
+      parameters:
+        - $ref: '#/components/parameters/EnvironmentId'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Environment'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Environments]
+      summary: 更新环境
+      parameters:
+        - $ref: '#/components/parameters/EnvironmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEnvironmentRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Environment'
+    delete:
+      tags: [Environments]
+      summary: 删除环境
+      parameters:
+        - $ref: '#/components/parameters/EnvironmentId'
+      responses:
+        '204':
+          description: 删除成功
+
+  /environments/{id}/start:
+    post:
+      tags: [Environments]
+      summary: 启动环境
+      parameters:
+        - $ref: '#/components/parameters/EnvironmentId'
+      responses:
+        '200':
+          description: 启动成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Environment'
+
+  /environments/{id}/stop:
+    post:
+      tags: [Environments]
+      summary: 停止环境
+      parameters:
+        - $ref: '#/components/parameters/EnvironmentId'
+      responses:
+        '200':
+          description: 停止成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Environment'
+
+  /environments/{id}/restart:
+    post:
+      tags: [Environments]
+      summary: 重启环境
+      parameters:
+        - $ref: '#/components/parameters/EnvironmentId'
+      responses:
+        '200':
+          description: 重启成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Environment'
+
+  /environments/{id}/ssh-config:
+    get:
+      tags: [Environments]
+      summary: 获取 SSH 配置
+      parameters:
+        - $ref: '#/components/parameters/EnvironmentId'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SSHConfig'
+
+  /environments/{id}/metrics:
+    get:
+      tags: [Environments]
+      summary: 获取环境监控指标
+      parameters:
+        - $ref: '#/components/parameters/EnvironmentId'
+        - name: start_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: end_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvironmentMetrics'
+
+  # ============================================================================
+  # Templates
+  # ============================================================================
+  /templates:
+    get:
+      tags: [Templates]
+      summary: 列出模板
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTemplates'
+    post:
+      tags: [Templates]
+      summary: 创建模板
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTemplateRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+
+  /templates/{id}:
+    get:
+      tags: [Templates]
+      summary: 获取模板详情
+      parameters:
+        - $ref: '#/components/parameters/TemplateId'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+    put:
+      tags: [Templates]
+      summary: 更新模板
+      parameters:
+        - $ref: '#/components/parameters/TemplateId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTemplateRequest'
+      responses:
+        '200':
+          description: 更新成功
+    delete:
+      tags: [Templates]
+      summary: 删除模板
+      parameters:
+        - $ref: '#/components/parameters/TemplateId'
+      responses:
+        '204':
+          description: 删除成功
+
+  # ============================================================================
+  # Deployments
+  # ============================================================================
+  /deployments:
+    get:
+      tags: [Deployments]
+      summary: 列出部署
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: environment_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, building, deploying, succeeded, failed, rolled_back]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDeployments'
+    post:
+      tags: [Deployments]
+      summary: 创建部署
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDeploymentRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deployment'
+
+  /deployments/{id}:
+    get:
+      tags: [Deployments]
+      summary: 获取部署详情
+      parameters:
+        - $ref: '#/components/parameters/DeploymentId'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deployment'
+
+  /deployments/{id}/rollback:
+    post:
+      tags: [Deployments]
+      summary: 回滚部署
+      parameters:
+        - $ref: '#/components/parameters/DeploymentId'
+      responses:
+        '200':
+          description: 回滚成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deployment'
+
+  /deployments/{id}/logs:
+    get:
+      tags: [Deployments]
+      summary: 获取部署日志
+      parameters:
+        - $ref: '#/components/parameters/DeploymentId'
+        - name: follow
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeploymentLogs'
+
+  # ============================================================================
+  # API Keys
+  # ============================================================================
+  /api-keys:
+    get:
+      tags: [API Keys]
+      summary: 列出 API 密钥
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAPIKeys'
+    post:
+      tags: [API Keys]
+      summary: 创建 API 密钥
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAPIKeyRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateAPIKeyResponse'
+
+  /api-keys/scopes:
+    get:
+      tags: [API Keys]
+      summary: 获取可用的权限范围
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /api-keys/{id}:
+    get:
+      tags: [API Keys]
+      summary: 获取 API 密钥详情
+      parameters:
+        - $ref: '#/components/parameters/APIKeyId'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKey'
+    put:
+      tags: [API Keys]
+      summary: 更新 API 密钥
+      parameters:
+        - $ref: '#/components/parameters/APIKeyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAPIKeyRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKey'
+    delete:
+      tags: [API Keys]
+      summary: 删除 API 密钥
+      parameters:
+        - $ref: '#/components/parameters/APIKeyId'
+      responses:
+        '204':
+          description: 删除成功
+
+  /api-keys/{id}/revoke:
+    post:
+      tags: [API Keys]
+      summary: 撤销 API 密钥
+      parameters:
+        - $ref: '#/components/parameters/APIKeyId'
+      responses:
+        '200':
+          description: 撤销成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  # ============================================================================
+  # Webhooks
+  # ============================================================================
+  /webhooks:
+    get:
+      tags: [Webhooks]
+      summary: 列出 Webhook
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedWebhooks'
+    post:
+      tags: [Webhooks]
+      summary: 创建 Webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWebhookRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+
+  /webhooks/events:
+    get:
+      tags: [Webhooks]
+      summary: 获取可用的事件类型
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /webhooks/{id}:
+    get:
+      tags: [Webhooks]
+      summary: 获取 Webhook 详情
+      parameters:
+        - $ref: '#/components/parameters/WebhookId'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+    put:
+      tags: [Webhooks]
+      summary: 更新 Webhook
+      parameters:
+        - $ref: '#/components/parameters/WebhookId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWebhookRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+    delete:
+      tags: [Webhooks]
+      summary: 删除 Webhook
+      parameters:
+        - $ref: '#/components/parameters/WebhookId'
+      responses:
+        '204':
+          description: 删除成功
+
+  /webhooks/{id}/active:
+    put:
+      tags: [Webhooks]
+      summary: 设置 Webhook 激活状态
+      parameters:
+        - $ref: '#/components/parameters/WebhookId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                active:
+                  type: boolean
+              required: [active]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /webhooks/{id}/secret:
+    post:
+      tags: [Webhooks]
+      summary: 重新生成 Webhook 密钥
+      parameters:
+        - $ref: '#/components/parameters/WebhookId'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  secret:
+                    type: string
+
+  /webhooks/{id}/test:
+    post:
+      tags: [Webhooks]
+      summary: 测试 Webhook
+      parameters:
+        - $ref: '#/components/parameters/WebhookId'
+      responses:
+        '200':
+          description: 测试发送成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /webhooks/{id}/deliveries:
+    get:
+      tags: [Webhooks]
+      summary: 获取 Webhook 投递历史
+      parameters:
+        - $ref: '#/components/parameters/WebhookId'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedWebhookDeliveries'
+
+  /webhooks/{id}/deliveries/{delivery_id}/retry:
+    post:
+      tags: [Webhooks]
+      summary: 重试 Webhook 投递
+      parameters:
+        - $ref: '#/components/parameters/WebhookId'
+        - name: delivery_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 重试已启动
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSizeParam:
+      name: page_size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    EnvironmentId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    TemplateId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    DeploymentId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    APIKeyId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    WebhookId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    BadRequest:
+      description: 请求参数错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+    Unauthorized:
+      description: 未授权
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+    Forbidden:
+      description: 禁止访问
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+    NotFound:
+      description: 资源不存在
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+    Conflict:
+      description: 资源冲突
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+    RateLimited:
+      description: 请求过于频繁
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+
+  schemas:
+    # ============================================================================
+    # Common Schemas
+    # ============================================================================
+    APIError:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "BAD_REQUEST"
+        message:
+          type: string
+          example: "Invalid request parameters"
+        details:
+          type: object
+          additionalProperties:
+            type: string
+        request_id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+      required: [code, message, timestamp]
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total_items:
+          type: integer
+          format: int64
+        total_pages:
+          type: integer
+        has_next:
+          type: boolean
+        has_prev:
+          type: boolean
+
+    # ============================================================================
+    # Authentication Schemas
+    # ============================================================================
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        name:
+          type: string
+      required: [email, password, name]
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required: [email, password]
+
+    AuthResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          default: "Bearer"
+        expires_in:
+          type: integer
+          description: Token 过期时间（秒）
+        user:
+          $ref: '#/components/schemas/User'
+
+    # ============================================================================
+    # User Schemas
+    # ============================================================================
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+        role:
+          type: string
+          enum: [developer, admin, org_admin]
+        mfa_enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+
+    # ============================================================================
+    # Environment Schemas
+    # ============================================================================
+    Environment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        template_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [creating, running, stopped, failed, suspended, archived]
+        resources:
+          $ref: '#/components/schemas/ResourceConfig'
+        env_vars:
+          type: object
+          additionalProperties:
+            type: string
+        ports:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortMapping'
+        preview_url:
+          type: string
+          format: uri
+        ssh_host:
+          type: string
+        ssh_port:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        last_active_at:
+          type: string
+          format: date-time
+
+    CreateEnvironmentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+        template_id:
+          type: string
+          format: uuid
+        resources:
+          $ref: '#/components/schemas/ResourceConfig'
+        env_vars:
+          type: object
+          additionalProperties:
+            type: string
+        ports:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortMapping'
+        git_repo_url:
+          type: string
+          format: uri
+      required: [name, template_id]
+
+    UpdateEnvironmentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        resources:
+          $ref: '#/components/schemas/ResourceConfig'
+        env_vars:
+          type: object
+          additionalProperties:
+            type: string
+
+    ResourceConfig:
+      type: object
+      properties:
+        cpu:
+          type: string
+          example: "2"
+          description: CPU 核心数
+        memory:
+          type: string
+          example: "4Gi"
+          description: 内存大小
+        storage:
+          type: string
+          example: "20Gi"
+          description: 存储大小
+
+    PortMapping:
+      type: object
+      properties:
+        container_port:
+          type: integer
+        protocol:
+          type: string
+          enum: [tcp, udp]
+          default: tcp
+        public:
+          type: boolean
+          default: false
+
+    SSHConfig:
+      type: object
+      properties:
+        host:
+          type: string
+        port:
+          type: integer
+        username:
+          type: string
+        private_key:
+          type: string
+        config_snippet:
+          type: string
+          description: SSH config 文件片段
+
+    EnvironmentMetrics:
+      type: object
+      properties:
+        cpu_usage:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricPoint'
+        memory_usage:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricPoint'
+        storage_usage:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricPoint'
+        network_rx:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricPoint'
+        network_tx:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricPoint'
+
+    MetricPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+          format: double
+
+    PaginatedEnvironments:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Environment'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # ============================================================================
+    # Template Schemas
+    # ============================================================================
+    Template:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        icon_url:
+          type: string
+          format: uri
+        default_resources:
+          $ref: '#/components/schemas/ResourceConfig'
+        dockerfile:
+          type: string
+        setup_commands:
+          type: array
+          items:
+            type: string
+        is_official:
+          type: boolean
+        is_public:
+          type: boolean
+        version:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateTemplateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        default_resources:
+          $ref: '#/components/schemas/ResourceConfig'
+        dockerfile:
+          type: string
+        setup_commands:
+          type: array
+          items:
+            type: string
+        is_public:
+          type: boolean
+          default: false
+      required: [name, dockerfile]
+
+    UpdateTemplateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        default_resources:
+          $ref: '#/components/schemas/ResourceConfig'
+        dockerfile:
+          type: string
+        setup_commands:
+          type: array
+          items:
+            type: string
+        is_public:
+          type: boolean
+
+    PaginatedTemplates:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Template'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # ============================================================================
+    # Deployment Schemas
+    # ============================================================================
+    Deployment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        environment_id:
+          type: string
+          format: uuid
+        version:
+          type: string
+        status:
+          type: string
+          enum: [pending, building, deploying, succeeded, failed, rolled_back]
+        image_tag:
+          type: string
+        commit_sha:
+          type: string
+        commit_message:
+          type: string
+        deployed_by:
+          type: string
+          format: uuid
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    CreateDeploymentRequest:
+      type: object
+      properties:
+        environment_id:
+          type: string
+          format: uuid
+        branch:
+          type: string
+          default: main
+        commit_sha:
+          type: string
+        build_args:
+          type: object
+          additionalProperties:
+            type: string
+      required: [environment_id]
+
+    DeploymentLogs:
+      type: object
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogEntry'
+
+    LogEntry:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        level:
+          type: string
+          enum: [info, warn, error]
+        message:
+          type: string
+        stage:
+          type: string
+          enum: [build, push, deploy]
+
+    PaginatedDeployments:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Deployment'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # ============================================================================
+    # API Key Schemas
+    # ============================================================================
+    APIKey:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        key_prefix:
+          type: string
+          description: API Key 前缀（用于识别）
+        scopes:
+          type: array
+          items:
+            type: string
+        expires_at:
+          type: string
+          format: date-time
+        last_used_at:
+          type: string
+          format: date-time
+        last_used_ip:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    CreateAPIKeyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+          minItems: 1
+        expires_at:
+          type: string
+          format: date-time
+      required: [name, scopes]
+
+    CreateAPIKeyResponse:
+      type: object
+      properties:
+        api_key:
+          $ref: '#/components/schemas/APIKey'
+        plain_key:
+          type: string
+          description: 完整的 API Key（仅在创建时返回一次）
+
+    UpdateAPIKeyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+
+    PaginatedAPIKeys:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/APIKey'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # ============================================================================
+    # Webhook Schemas
+    # ============================================================================
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+        is_active:
+          type: boolean
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        retry_config:
+          $ref: '#/components/schemas/WebhookRetryConfig'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateWebhookRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+          minItems: 1
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        retry_config:
+          $ref: '#/components/schemas/WebhookRetryConfig'
+      required: [name, url, events]
+
+    WebhookRetryConfig:
+      type: object
+      properties:
+        max_retries:
+          type: integer
+          default: 3
+        retry_delay_ms:
+          type: integer
+          format: int64
+          default: 1000
+        backoff_factor:
+          type: number
+          format: double
+          default: 2.0
+        max_delay_ms:
+          type: integer
+          format: int64
+          default: 60000
+
+    WebhookDelivery:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        webhook_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+        event_id:
+          type: string
+        payload:
+          type: string
+        response_code:
+          type: integer
+        response_body:
+          type: string
+        status:
+          type: string
+          enum: [pending, success, failed, retrying]
+        attempt_count:
+          type: integer
+        next_retry_at:
+          type: string
+          format: date-time
+        delivered_at:
+          type: string
+          format: date-time
+        error_message:
+          type: string
+        duration_ms:
+          type: integer
+          format: int64
+        created_at:
+          type: string
+          format: date-time
+
+    PaginatedWebhooks:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Webhook'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    PaginatedWebhookDeliveries:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookDelivery'
+        pagination:
+          $ref: '#/components/schemas/Pagination'

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Cloud DevBox macOS Entitlements
+  These entitlements are required for the app to function properly on macOS
+-->
+<plist version="1.0">
+<dict>
+    <!-- Allow the app to be run on macOS -->
+    <key>com.apple.security.app-sandbox</key>
+    <false/>
+    
+    <!-- Allow hardened runtime (required for notarization) -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    
+    <!-- Allow unsigned executable memory (required for WebView) -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    
+    <!-- Allow dyld environment variables (for debugging) -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+    
+    <!-- Network access for API calls -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+    
+    <!-- Network server for local preview -->
+    <key>com.apple.security.network.server</key>
+    <true/>
+    
+    <!-- File access for project files -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+    
+    <!-- Keychain access for secure credential storage -->
+    <key>com.apple.security.keychain-access-groups</key>
+    <array>
+        <string>$(AppIdentifierPrefix)io.devbox.desktop</string>
+    </array>
+    
+    <!-- Allow automation (for IDE integration) -->
+    <key>com.apple.security.automation.apple-events</key>
+    <true/>
+    
+    <!-- Camera access for video meetings -->
+    <key>com.apple.security.device.camera</key>
+    <true/>
+    
+    <!-- Microphone access for audio meetings -->
+    <key>com.apple.security.device.audio-input</key>
+    <true/>
+    
+    <!-- Screen recording for screen sharing -->
+    <key>com.apple.security.device.screen-capture</key>
+    <true/>
+</dict>
+</plist>

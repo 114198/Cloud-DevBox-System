@@ -1,0 +1,22 @@
+Package: cloud-devbox
+Version: {{VERSION}}
+Section: devel
+Priority: optional
+Architecture: {{ARCH}}
+Depends: libwebkit2gtk-4.1-0, libgtk-3-0, libayatana-appindicator3-1, libssl3, ca-certificates
+Recommends: git, openssh-client
+Suggests: code, jetbrains-toolbox
+Maintainer: Cloud DevBox Team <support@devbox.io>
+Homepage: https://devbox.io
+Description: Cloud Development Environment Manager
+ Cloud DevBox is a powerful desktop client for managing cloud
+ development environments. Create, configure, and connect to
+ cloud-based development environments directly from your desktop.
+ .
+ Features:
+  - Quick environment creation from 30+ pre-configured templates
+  - Seamless IDE integration (VSCode, JetBrains)
+  - Real-time collaboration with team members
+  - Built-in terminal and file management
+  - Resource monitoring and management
+  - Git integration and version control

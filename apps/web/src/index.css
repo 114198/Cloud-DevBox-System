@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Web Terminal Styles */
+.web-terminal-card .xterm {
+  padding: 8px;
+}
+
+.web-terminal-card .xterm-viewport {
+  overflow-y: auto !important;
+}
+
+.web-terminal-card .xterm-screen {
+  width: 100% !important;
+}
+
+/* Connection Info Panel Styles */
+.connection-info-panel .ant-tabs-content {
+  padding-top: 16px;
+}
+
+/* IDE Connection Guide Styles */
+.ide-connection-guide .ant-steps-item-description {
+  max-width: none !important;
+}

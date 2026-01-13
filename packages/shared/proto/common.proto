@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package devbox.common;
+
+option go_package = "github.com/cloud-devbox/packages/shared/proto";
+
+// Pagination request
+message PaginationRequest {
+  int32 page = 1;
+  int32 per_page = 2;
+}
+
+// Pagination response
+message PaginationResponse {
+  int64 total = 1;
+  int32 page = 2;
+  int32 per_page = 3;
+  int32 total_pages = 4;
+}
+
+// Resource configuration
+message ResourceConfig {
+  string cpu = 1;
+  string memory = 2;
+  string storage = 3;
+}
+
+// Environment status enum
+enum EnvironmentStatus {
+  ENVIRONMENT_STATUS_UNSPECIFIED = 0;
+  ENVIRONMENT_STATUS_CREATING = 1;
+  ENVIRONMENT_STATUS_RUNNING = 2;
+  ENVIRONMENT_STATUS_STOPPED = 3;
+  ENVIRONMENT_STATUS_FAILED = 4;
+  ENVIRONMENT_STATUS_SUSPENDED = 5;
+  ENVIRONMENT_STATUS_ARCHIVED = 6;
+}
+
+// User role enum
+enum UserRole {
+  USER_ROLE_UNSPECIFIED = 0;
+  USER_ROLE_DEVELOPER = 1;
+  USER_ROLE_ADMIN = 2;
+  USER_ROLE_ORG_ADMIN = 3;
+}
+
+// Project role enum
+enum ProjectRole {
+  PROJECT_ROLE_UNSPECIFIED = 0;
+  PROJECT_ROLE_OWNER = 1;
+  PROJECT_ROLE_EDITOR = 2;
+  PROJECT_ROLE_VIEWER = 3;
+}
+
+// Meeting type enum
+enum MeetingType {
+  MEETING_TYPE_UNSPECIFIED = 0;
+  MEETING_TYPE_AUDIO = 1;
+  MEETING_TYPE_VIDEO = 2;
+  MEETING_TYPE_SCREEN_SHARE = 3;
+}
+
+// Meeting status enum
+enum MeetingStatus {
+  MEETING_STATUS_UNSPECIFIED = 0;
+  MEETING_STATUS_SCHEDULED = 1;
+  MEETING_STATUS_ACTIVE = 2;
+  MEETING_STATUS_ENDED = 3;
+  MEETING_STATUS_CANCELLED = 4;
+}

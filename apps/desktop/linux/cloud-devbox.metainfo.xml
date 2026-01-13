@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Cloud DevBox AppStream Metadata
+  This file provides metadata for Linux software centers
+-->
+<component type="desktop-application">
+  <id>io.devbox.desktop</id>
+  <name>Cloud DevBox</name>
+  <summary>Cloud Development Environment Manager</summary>
+  <developer_name>Cloud DevBox Team</developer_name>
+  
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  
+  <description>
+    <p>
+      Cloud DevBox is a powerful desktop client for managing cloud development environments.
+      Create, configure, and connect to cloud-based development environments directly from your desktop.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Quick environment creation from 30+ pre-configured templates</li>
+      <li>Seamless IDE integration (VSCode, JetBrains)</li>
+      <li>Real-time collaboration with team members</li>
+      <li>Built-in terminal and file management</li>
+      <li>Resource monitoring and management</li>
+      <li>Git integration and version control</li>
+    </ul>
+    <p>
+      Perfect for developers who want consistent, reproducible development environments
+      without the hassle of local setup and configuration.
+    </p>
+  </description>
+  
+  <launchable type="desktop-id">cloud-devbox.desktop</launchable>
+  
+  <url type="homepage">https://devbox.io</url>
+  <url type="bugtracker">https://github.com/devbox/desktop/issues</url>
+  <url type="help">https://docs.devbox.io</url>
+  <url type="donation">https://devbox.io/sponsor</url>
+  
+  <screenshots>
+    <screenshot type="default">
+      <caption>Dashboard showing active development environments</caption>
+      <image>https://devbox.io/screenshots/dashboard.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Environment creation with template selection</caption>
+      <image>https://devbox.io/screenshots/templates.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Real-time collaboration features</caption>
+      <image>https://devbox.io/screenshots/collaboration.png</image>
+    </screenshot>
+  </screenshots>
+  
+  <categories>
+    <category>Development</category>
+    <category>IDE</category>
+    <category>WebDevelopment</category>
+  </categories>
+  
+  <keywords>
+    <keyword>development</keyword>
+    <keyword>cloud</keyword>
+    <keyword>devbox</keyword>
+    <keyword>ide</keyword>
+    <keyword>coding</keyword>
+    <keyword>programming</keyword>
+    <keyword>container</keyword>
+    <keyword>docker</keyword>
+    <keyword>kubernetes</keyword>
+  </keywords>
+  
+  <provides>
+    <binary>cloud-devbox</binary>
+    <id>io.devbox.desktop</id>
+  </provides>
+  
+  <requires>
+    <display_length compare="ge">768</display_length>
+    <internet>always</internet>
+  </requires>
+  
+  <recommends>
+    <control>keyboard</control>
+    <control>pointing</control>
+    <display_length compare="ge">1024</display_length>
+  </recommends>
+  
+  <content_rating type="oars-1.1">
+    <content_attribute id="social-chat">mild</content_attribute>
+    <content_attribute id="social-audio">mild</content_attribute>
+  </content_rating>
+  
+  <releases>
+    <release version="0.1.0" date="2026-01-13">
+      <description>
+        <p>Initial release of Cloud DevBox Desktop Client</p>
+        <ul>
+          <li>Environment creation and management</li>
+          <li>IDE integration (VSCode, JetBrains)</li>
+          <li>System tray support</li>
+          <li>Auto-update functionality</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+  
+  <languages>
+    <lang percentage="100">en</lang>
+    <lang percentage="100">zh_CN</lang>
+    <lang percentage="80">zh_TW</lang>
+    <lang percentage="60">ja</lang>
+  </languages>
+</component>

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Cloud DevBox Windows Installer (WiX)
+  This template customizes the MSI installer for Windows
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product
+    Id="*"
+    Name="Cloud DevBox"
+    Language="!(loc.Language)"
+    Version="$(var.Version)"
+    Manufacturer="Cloud DevBox Team"
+    UpgradeCode="{{upgrade_code}}">
+
+    <Package
+      InstallerVersion="500"
+      Compressed="yes"
+      InstallScope="perUser"
+      Description="Cloud DevBox Desktop Client"
+      Comments="A desktop client for managing cloud development environments"
+      Keywords="DevBox,Development,Cloud,IDE"
+      Manufacturer="Cloud DevBox Team" />
+
+    <!-- Upgrade handling -->
+    <MajorUpgrade
+      Schedule="afterInstallInitialize"
+      DowngradeErrorMessage="!(loc.DowngradeError)"
+      AllowSameVersionUpgrades="yes" />
+
+    <!-- Media configuration -->
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <!-- Feature definition -->
+    <Feature Id="ProductFeature" Title="Cloud DevBox" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+      <ComponentGroupRef Id="ShortcutComponents" />
+      <ComponentGroupRef Id="RegistryComponents" />
+    </Feature>
+
+    <!-- UI Configuration -->
+    <UIRef Id="WixUI_InstallDir" />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
+    
+    <!-- Custom banner and dialog images -->
+    <WixVariable Id="WixUIBannerBmp" Value="banner.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="dialog.bmp" />
+    
+    <!-- License agreement -->
+    <WixVariable Id="WixUILicenseRtf" Value="license.rtf" />
+
+    <!-- Installation directory -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="LocalAppDataFolder">
+        <Directory Id="INSTALLDIR" Name="Cloud DevBox">
+          <Directory Id="BinDir" Name="bin" />
+          <Directory Id="ResourcesDir" Name="resources" />
+        </Directory>
+      </Directory>
+      
+      <!-- Start Menu shortcuts -->
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="Cloud DevBox" />
+      </Directory>
+      
+      <!-- Desktop shortcut -->
+      <Directory Id="DesktopFolder" Name="Desktop" />
+    </Directory>
+
+    <!-- Shortcut components -->
+    <ComponentGroup Id="ShortcutComponents" Directory="ApplicationProgramsFolder">
+      <Component Id="StartMenuShortcut" Guid="*">
+        <Shortcut
+          Id="ApplicationStartMenuShortcut"
+          Name="Cloud DevBox"
+          Description="Cloud DevBox Desktop Client"
+          Target="[INSTALLDIR]Cloud DevBox.exe"
+          WorkingDirectory="INSTALLDIR"
+          Icon="ProductIcon" />
+        <Shortcut
+          Id="UninstallShortcut"
+          Name="Uninstall Cloud DevBox"
+          Description="Uninstall Cloud DevBox"
+          Target="[SystemFolder]msiexec.exe"
+          Arguments="/x [ProductCode]" />
+        <RemoveFolder Id="CleanUpShortCut" On="uninstall" />
+        <RegistryValue
+          Root="HKCU"
+          Key="Software\CloudDevBox"
+          Name="StartMenuShortcut"
+          Type="integer"
+          Value="1"
+          KeyPath="yes" />
+      </Component>
+      
+      <Component Id="DesktopShortcut" Guid="*" Directory="DesktopFolder">
+        <Shortcut
+          Id="ApplicationDesktopShortcut"
+          Name="Cloud DevBox"
+          Description="Cloud DevBox Desktop Client"
+          Target="[INSTALLDIR]Cloud DevBox.exe"
+          WorkingDirectory="INSTALLDIR"
+          Icon="ProductIcon" />
+        <RegistryValue
+          Root="HKCU"
+          Key="Software\CloudDevBox"
+          Name="DesktopShortcut"
+          Type="integer"
+          Value="1"
+          KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Registry components for file associations and protocol handlers -->
+    <ComponentGroup Id="RegistryComponents" Directory="INSTALLDIR">
+      <Component Id="RegistryEntries" Guid="*">
+        <!-- Application registration -->
+        <RegistryKey Root="HKCU" Key="Software\CloudDevBox">
+          <RegistryValue Name="InstallPath" Type="string" Value="[INSTALLDIR]" />
+          <RegistryValue Name="Version" Type="string" Value="$(var.Version)" />
+        </RegistryKey>
+        
+        <!-- Protocol handler: devbox:// -->
+        <RegistryKey Root="HKCU" Key="Software\Classes\devbox">
+          <RegistryValue Type="string" Value="URL:DevBox Protocol" />
+          <RegistryValue Name="URL Protocol" Type="string" Value="" />
+        </RegistryKey>
+        <RegistryKey Root="HKCU" Key="Software\Classes\devbox\shell\open\command">
+          <RegistryValue Type="string" Value="&quot;[INSTALLDIR]Cloud DevBox.exe&quot; &quot;%1&quot;" />
+        </RegistryKey>
+        
+        <!-- File association: .devbox -->
+        <RegistryKey Root="HKCU" Key="Software\Classes\.devbox">
+          <RegistryValue Type="string" Value="CloudDevBox.Environment" />
+        </RegistryKey>
+        <RegistryKey Root="HKCU" Key="Software\Classes\CloudDevBox.Environment">
+          <RegistryValue Type="string" Value="DevBox Environment Configuration" />
+        </RegistryKey>
+        <RegistryKey Root="HKCU" Key="Software\Classes\CloudDevBox.Environment\DefaultIcon">
+          <RegistryValue Type="string" Value="[INSTALLDIR]Cloud DevBox.exe,0" />
+        </RegistryKey>
+        <RegistryKey Root="HKCU" Key="Software\Classes\CloudDevBox.Environment\shell\open\command">
+          <RegistryValue Type="string" Value="&quot;[INSTALLDIR]Cloud DevBox.exe&quot; &quot;%1&quot;" />
+        </RegistryKey>
+      </Component>
+    </ComponentGroup>
+
+    <!-- Product icon -->
+    <Icon Id="ProductIcon" SourceFile="$(var.IconPath)" />
+    <Property Id="ARPPRODUCTICON" Value="ProductIcon" />
+    
+    <!-- Add/Remove Programs properties -->
+    <Property Id="ARPHELPLINK" Value="https://devbox.io/support" />
+    <Property Id="ARPURLINFOABOUT" Value="https://devbox.io" />
+    <Property Id="ARPURLUPDATEINFO" Value="https://devbox.io/download" />
+
+  </Product>
+</Wix>

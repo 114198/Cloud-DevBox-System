@@ -1,0 +1,24 @@
+{
+    "version": "0.1.0",
+    "description": "Cloud DevBox CLI - Manage your cloud development environments",
+    "homepage": "https://github.com/your-org/cloud-devbox",
+    "license": "MIT",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/your-org/cloud-devbox/releases/download/v0.1.0/devbox-0.1.0-x86_64-pc-windows-msvc.zip",
+            "hash": "PLACEHOLDER_SHA256_WINDOWS_X64",
+            "extract_dir": ""
+        }
+    },
+    "bin": "devbox.exe",
+    "checkver": {
+        "github": "https://github.com/your-org/cloud-devbox"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/your-org/cloud-devbox/releases/download/v$version/devbox-$version-x86_64-pc-windows-msvc.zip"
+            }
+        }
+    }
+}

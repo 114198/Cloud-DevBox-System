@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Chinese (Simplified) localization for Cloud DevBox installer
+-->
+<WixLocalization Culture="zh-CN" xmlns="http://schemas.microsoft.com/wix/2006/localization">
+  <String Id="Language">2052</String>
+  <String Id="ProductName">Cloud DevBox</String>
+  <String Id="ProductDescription">用于管理云端开发环境的桌面客户端</String>
+  <String Id="ManufacturerName">Cloud DevBox 团队</String>
+  
+  <!-- Installation messages -->
+  <String Id="WelcomeTitle">欢迎使用 Cloud DevBox 安装向导</String>
+  <String Id="WelcomeDescription">此向导将引导您完成 Cloud DevBox 的安装。Cloud DevBox 是一款强大的桌面客户端，用于管理云端开发环境。</String>
+  
+  <String Id="InstallDirTitle">选择安装位置</String>
+  <String Id="InstallDirDescription">选择 Cloud DevBox 的安装文件夹。</String>
+  
+  <String Id="FinishTitle">安装完成</String>
+  <String Id="FinishDescription">Cloud DevBox 已成功安装。点击"完成"退出安装向导。</String>
+  
+  <!-- Error messages -->
+  <String Id="DowngradeError">已安装了更新版本的 Cloud DevBox。请先卸载后再安装旧版本。</String>
+  <String Id="InstallError">安装过程中发生错误。请重试或联系技术支持。</String>
+  
+  <!-- Feature descriptions -->
+  <String Id="FeatureMainTitle">Cloud DevBox 应用程序</String>
+  <String Id="FeatureMainDescription">Cloud DevBox 桌面应用程序及所有必需组件。</String>
+  
+  <!-- Shortcut names -->
+  <String Id="ShortcutStartMenu">Cloud DevBox</String>
+  <String Id="ShortcutDesktop">Cloud DevBox</String>
+  <String Id="ShortcutUninstall">卸载 Cloud DevBox</String>
+</WixLocalization>

@@ -1,0 +1,26 @@
+[Desktop Entry]
+Name=Cloud DevBox
+GenericName=Cloud Development Environment
+Comment=A desktop client for managing cloud development environments
+Exec=cloud-devbox %U
+Icon=cloud-devbox
+Terminal=false
+Type=Application
+Categories=Development;IDE;WebDevelopment;
+Keywords=development;cloud;devbox;ide;coding;programming;
+StartupNotify=true
+StartupWMClass=cloud-devbox
+MimeType=x-scheme-handler/devbox;application/x-devbox;
+
+# Actions for quick access
+Actions=new-environment;open-dashboard;
+
+[Desktop Action new-environment]
+Name=New Environment
+Name[zh_CN]=新建环境
+Exec=cloud-devbox --new-environment
+
+[Desktop Action open-dashboard]
+Name=Open Dashboard
+Name[zh_CN]=打开控制台
+Exec=cloud-devbox --dashboard

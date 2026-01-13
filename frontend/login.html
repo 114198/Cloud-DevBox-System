@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - Cloud DevBox</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .auth-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-deep);
+            padding: 40px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* 动态背景 */
+        .auth-bg {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            opacity: 0.4;
+        }
+        
+        .auth-bg-shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            animation: float 25s ease-in-out infinite;
+        }
+        
+        .auth-bg-shape:nth-child(1) {
+            width: 400px;
+            height: 400px;
+            background: rgba(37, 99, 235, 0.2);
+            top: -150px;
+            right: 20%;
+            animation-delay: 0s;
+        }
+        
+        .auth-bg-shape:nth-child(2) {
+            width: 300px;
+            height: 300px;
+            background: rgba(99, 102, 241, 0.15);
+            bottom: -100px;
+            left: 10%;
+            animation-delay: -8s;
+        }
+        
+        .auth-bg-shape:nth-child(3) {
+            width: 250px;
+            height: 250px;
+            background: rgba(5, 150, 105, 0.1);
+            top: 40%;
+            left: 60%;
+            animation-delay: -15s;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -30px) scale(1.05); }
+            50% { transform: translate(-20px, 30px) scale(0.95); }
+            75% { transform: translate(-30px, -20px) scale(1.02); }
+        }
+        
+        /* 居中容器 - 左右布局 */
+        .auth-wrapper {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: stretch;
+            background: var(--bg-base);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            max-width: 900px;
+            width: 100%;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp 0.5s ease 0.1s forwards;
+        }
+        
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 左侧产品介绍 */
+        .auth-intro {
+            flex: 1;
+            padding: 48px;
+            background: var(--bg-elevated);
+            border-right: 1px solid var(--border-default);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .auth-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--text-primary);
+            margin-bottom: 32px;
+        }
+        
+        .auth-logo i {
+            font-size: 24px;
+            color: var(--primary);
+        }
+        
+        .auth-intro h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+        
+        .auth-intro > p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+        
+        .feature-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            opacity: 0;
+            transform: translateX(-15px);
+            animation: slideIn 0.4s ease forwards;
+        }
+        
+        .feature-item:nth-child(1) { animation-delay: 0.2s; }
+        .feature-item:nth-child(2) { animation-delay: 0.3s; }
+        .feature-item:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes slideIn {
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .feature-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(37, 99, 235, 0.1);
+            border-radius: var(--radius-md);
+            color: var(--primary);
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .feature-content h4 {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 2px;
+            color: var(--text-primary);
+        }
+        
+        .feature-content p {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin: 0;
+        }
+
+        /* 右侧表单 */
+        .auth-form-section {
+            width: 380px;
+            padding: 48px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .auth-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        
+        .auth-header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+        
+        .auth-header p {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        
+        .auth-form .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .auth-form .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: color 0.2s ease;
+        }
+        
+        .auth-form .form-group:focus-within label {
+            color: var(--primary);
+        }
+        
+        .auth-form .form-input {
+            width: 100%;
+            height: 42px;
+            padding: 0 14px;
+            font-size: 14px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .auth-form .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .auth-form .form-input::placeholder {
+            color: var(--text-tertiary);
+        }
+        
+        .login-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        
+        .remember-me input { width: 14px; height: 14px; }
+        
+        .forgot-password {
+            font-size: 13px;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .forgot-password:hover { text-decoration: underline; }
+        
+        .auth-btn {
+            width: 100%;
+            height: 42px;
+            font-size: 14px;
+            font-weight: 500;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        
+        .auth-btn:hover { background: var(--primary-hover); }
+        .auth-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 24px 0;
+            color: var(--text-tertiary);
+            font-size: 12px;
+        }
+        
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-default);
+        }
+        
+        .divider span { padding: 0 12px; }
+        
+        .social-login {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .social-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .social-btn:hover {
+            border-color: var(--border-emphasis);
+            background: var(--bg-surface);
+        }
+        
+        .auth-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .auth-footer a {
+            color: var(--primary);
+            font-weight: 500;
+            text-decoration: none;
+        }
+        
+        .auth-footer a:hover { text-decoration: underline; }
+        
+        @media (max-width: 800px) {
+            .auth-wrapper { flex-direction: column; max-width: 420px; }
+            .auth-intro { border-right: none; border-bottom: 1px solid var(--border-default); padding: 32px; }
+            .auth-form-section { width: 100%; padding: 32px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-page">
+        <div class="auth-bg">
+            <div class="auth-bg-shape"></div>
+            <div class="auth-bg-shape"></div>
+            <div class="auth-bg-shape"></div>
+        </div>
+        
+        <div class="auth-wrapper">
+            <div class="auth-intro">
+                <div class="auth-logo">
+                    <i class="fas fa-cube"></i>
+                    <span>Cloud DevBox</span>
+                </div>
+                <h2>云端开发，随时随地</h2>
+                <p>一键创建云端开发环境，支持多种编程语言和框架，让您专注于代码本身。</p>
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+                        <div class="feature-content">
+                            <h4>秒级启动</h4>
+                            <p>预配置环境模板，几秒内即可开始开发</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-code"></i></div>
+                        <div class="feature-content">
+                            <h4>IDE 集成</h4>
+                            <p>支持 VSCode Remote SSH，本地体验云端开发</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-users"></i></div>
+                        <div class="feature-content">
+                            <h4>实时协作</h4>
+                            <p>多人实时编辑，高效团队协作</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="auth-form-section">
+                <div class="auth-header">
+                    <h1>欢迎回来</h1>
+                    <p>登录您的账户以继续</p>
+                </div>
+                
+                <form class="auth-form" id="loginForm">
+                    <div class="form-group">
+                        <label>邮箱地址</label>
+                        <input type="email" class="form-input" placeholder="请输入邮箱" required>
+                    </div>
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" class="form-input" placeholder="请输入密码" required>
+                    </div>
+                    <div class="login-options">
+                        <label class="remember-me">
+                            <input type="checkbox"><span>记住我</span>
+                        </label>
+                        <a href="#" class="forgot-password">忘记密码？</a>
+                    </div>
+                    <button type="submit" class="btn btn-primary auth-btn">登录</button>
+                </form>
+                
+                <div class="divider"><span>或使用以下方式登录</span></div>
+                
+                <div class="social-login">
+                    <button class="social-btn" onclick="socialLogin('github')"><i class="fab fa-github"></i></button>
+                    <button class="social-btn" onclick="socialLogin('google')"><i class="fab fa-google"></i></button>
+                    <button class="social-btn" onclick="socialLogin('wechat')"><i class="fab fa-weixin"></i></button>
+                </div>
+                
+                <div class="auth-footer">还没有账户？<a href="register.html">立即注册</a></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme', savedTheme || (prefersDark ? 'dark' : 'light'));
+        })();
+        
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btn = this.querySelector('.auth-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 登录中...';
+            setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+        });
+        
+        function socialLogin(provider) {
+            event.currentTarget.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            setTimeout(() => { window.location.href = 'index.html'; }, 800);
+        }
+    </script>
+</body>
+</html>

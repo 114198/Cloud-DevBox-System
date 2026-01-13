@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - Cloud DevBox</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .auth-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-deep);
+            padding: 40px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .auth-bg {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            opacity: 0.4;
+        }
+        
+        .auth-bg-shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            animation: float 25s ease-in-out infinite;
+        }
+        
+        .auth-bg-shape:nth-child(1) {
+            width: 400px;
+            height: 400px;
+            background: rgba(5, 150, 105, 0.2);
+            top: -150px;
+            right: 20%;
+        }
+        
+        .auth-bg-shape:nth-child(2) {
+            width: 300px;
+            height: 300px;
+            background: rgba(37, 99, 235, 0.15);
+            bottom: -100px;
+            left: 10%;
+            animation-delay: -8s;
+        }
+        
+        .auth-bg-shape:nth-child(3) {
+            width: 250px;
+            height: 250px;
+            background: rgba(99, 102, 241, 0.1);
+            top: 40%;
+            left: 60%;
+            animation-delay: -15s;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -30px) scale(1.05); }
+            50% { transform: translate(-20px, 30px) scale(0.95); }
+            75% { transform: translate(-30px, -20px) scale(1.02); }
+        }
+        
+        .auth-wrapper {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: stretch;
+            background: var(--bg-base);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            max-width: 900px;
+            width: 100%;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp 0.5s ease 0.1s forwards;
+        }
+        
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .auth-intro {
+            flex: 1;
+            padding: 48px;
+            background: var(--bg-elevated);
+            border-right: 1px solid var(--border-default);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .auth-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--text-primary);
+            margin-bottom: 32px;
+        }
+        
+        .auth-logo i {
+            font-size: 24px;
+            color: var(--primary);
+        }
+        
+        .auth-intro h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+        
+        .auth-intro > p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+        
+        .feature-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            opacity: 0;
+            transform: translateX(-15px);
+            animation: slideIn 0.4s ease forwards;
+        }
+        
+        .feature-item:nth-child(1) { animation-delay: 0.2s; }
+        .feature-item:nth-child(2) { animation-delay: 0.3s; }
+        .feature-item:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes slideIn {
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .feature-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(5, 150, 105, 0.1);
+            border-radius: var(--radius-md);
+            color: var(--success);
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .feature-content h4 {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 2px;
+            color: var(--text-primary);
+        }
+        
+        .feature-content p {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin: 0;
+        }
+
+        .auth-form-section {
+            width: 380px;
+            padding: 40px 48px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .auth-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        
+        .auth-header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+        
+        .auth-header p {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        
+        .auth-form .form-group {
+            margin-bottom: 14px;
+        }
+        
+        .auth-form .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: color 0.2s ease;
+        }
+        
+        .auth-form .form-group:focus-within label {
+            color: var(--primary);
+        }
+        
+        .auth-form .form-input {
+            width: 100%;
+            height: 40px;
+            padding: 0 12px;
+            font-size: 14px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .auth-form .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .auth-form .form-input::placeholder {
+            color: var(--text-tertiary);
+        }
+        
+        .password-strength {
+            display: flex;
+            gap: 4px;
+            margin-top: 6px;
+        }
+        
+        .strength-bar {
+            flex: 1;
+            height: 3px;
+            background: var(--border-default);
+            border-radius: 2px;
+            transition: background 0.3s ease;
+        }
+        
+        .strength-bar.weak { background: var(--danger); }
+        .strength-bar.medium { background: var(--warning); }
+        .strength-bar.strong { background: var(--success); }
+        
+        .strength-text {
+            font-size: 11px;
+            margin-top: 4px;
+            color: var(--text-tertiary);
+        }
+        
+        .strength-text.weak { color: var(--danger); }
+        .strength-text.medium { color: var(--warning); }
+        .strength-text.strong { color: var(--success); }
+        
+        .terms-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 18px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        
+        .terms-checkbox input { width: 14px; height: 14px; margin-top: 1px; }
+        .terms-checkbox a { color: var(--primary); text-decoration: none; }
+        .terms-checkbox a:hover { text-decoration: underline; }
+        
+        .auth-btn {
+            width: 100%;
+            height: 42px;
+            font-size: 14px;
+            font-weight: 500;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        
+        .auth-btn:hover { background: var(--primary-hover); }
+        .auth-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: var(--text-tertiary);
+            font-size: 12px;
+        }
+        
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-default);
+        }
+        
+        .divider span { padding: 0 12px; }
+        
+        .social-login { display: flex; gap: 10px; }
+        
+        .social-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .social-btn:hover {
+            border-color: var(--border-emphasis);
+            background: var(--bg-surface);
+        }
+        
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .auth-footer a { color: var(--primary); font-weight: 500; text-decoration: none; }
+        .auth-footer a:hover { text-decoration: underline; }
+        
+        .success-message {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .success-message.show {
+            display: block;
+            animation: fadeUp 0.5s ease;
+        }
+        
+        .success-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 20px;
+            background: rgba(5, 150, 105, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--success);
+            font-size: 28px;
+        }
+        
+        .success-message h3 { font-size: 18px; margin-bottom: 8px; color: var(--text-primary); }
+        .success-message p { color: var(--text-secondary); font-size: 13px; }
+        
+        @media (max-width: 800px) {
+            .auth-wrapper { flex-direction: column; max-width: 420px; }
+            .auth-intro { border-right: none; border-bottom: 1px solid var(--border-default); padding: 32px; }
+            .auth-form-section { width: 100%; padding: 32px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-page">
+        <div class="auth-bg">
+            <div class="auth-bg-shape"></div>
+            <div class="auth-bg-shape"></div>
+            <div class="auth-bg-shape"></div>
+        </div>
+        
+        <div class="auth-wrapper">
+            <div class="auth-intro">
+                <div class="auth-logo">
+                    <i class="fas fa-cube"></i>
+                    <span>Cloud DevBox</span>
+                </div>
+                <h2>开启云端开发之旅</h2>
+                <p>注册即可获得免费试用额度，体验云端开发的便捷与高效。</p>
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-gift"></i></div>
+                        <div class="feature-content">
+                            <h4>免费试用</h4>
+                            <p>新用户赠送 20 小时免费使用时长</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-layer-group"></i></div>
+                        <div class="feature-content">
+                            <h4>丰富模板</h4>
+                            <p>30+ 预配置环境模板，覆盖主流技术栈</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                        <div class="feature-content">
+                            <h4>安全可靠</h4>
+                            <p>企业级安全保障，数据加密存储</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="auth-form-section">
+                <div class="auth-header">
+                    <h1>创建账户</h1>
+                    <p>填写以下信息完成注册</p>
+                </div>
+                
+                <form class="auth-form" id="registerForm">
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" class="form-input" placeholder="请输入用户名" required>
+                    </div>
+                    <div class="form-group">
+                        <label>邮箱地址</label>
+                        <input type="email" class="form-input" placeholder="请输入邮箱" required>
+                    </div>
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" class="form-input" id="password" placeholder="请设置密码（至少8位）" required minlength="8" oninput="checkStrength(this.value)">
+                        <div class="password-strength">
+                            <div class="strength-bar" id="s1"></div>
+                            <div class="strength-bar" id="s2"></div>
+                            <div class="strength-bar" id="s3"></div>
+                            <div class="strength-bar" id="s4"></div>
+                        </div>
+                        <div class="strength-text" id="strengthText"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>确认密码</label>
+                        <input type="password" class="form-input" id="confirmPassword" placeholder="请再次输入密码" required>
+                    </div>
+                    <label class="terms-checkbox">
+                        <input type="checkbox" required>
+                        <span>我已阅读并同意 <a href="#">服务条款</a> 和 <a href="#">隐私政策</a></span>
+                    </label>
+                    <button type="submit" class="btn btn-primary auth-btn">注册</button>
+                </form>
+                
+                <div class="divider"><span>或使用以下方式注册</span></div>
+                
+                <div class="social-login">
+                    <button class="social-btn" onclick="socialReg('github')"><i class="fab fa-github"></i></button>
+                    <button class="social-btn" onclick="socialReg('google')"><i class="fab fa-google"></i></button>
+                    <button class="social-btn" onclick="socialReg('wechat')"><i class="fab fa-weixin"></i></button>
+                </div>
+                
+                <div class="auth-footer">已有账户？<a href="login.html">立即登录</a></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme', savedTheme || (prefersDark ? 'dark' : 'light'));
+        })();
+        
+        function checkStrength(pwd) {
+            const bars = ['s1','s2','s3','s4'].map(id => document.getElementById(id));
+            const txt = document.getElementById('strengthText');
+            bars.forEach(b => b.className = 'strength-bar');
+            txt.className = 'strength-text';
+            txt.textContent = '';
+            if (!pwd) return;
+            
+            let s = 0;
+            if (pwd.length >= 8) s++;
+            if (pwd.length >= 12) s++;
+            if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) s++;
+            if (/\d/.test(pwd)) s++;
+            if (/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) s++;
+            s = Math.min(s, 4);
+            
+            const level = s <= 1 ? 'weak' : s <= 2 ? 'medium' : 'strong';
+            const labels = { weak: '弱', medium: '中', strong: '强' };
+            txt.textContent = '密码强度：' + labels[level];
+            txt.classList.add(level);
+            for (let i = 0; i < s; i++) bars[i].classList.add(level);
+        }
+        
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const pwd = document.getElementById('password').value;
+            const confirm = document.getElementById('confirmPassword');
+            if (pwd !== confirm.value) {
+                confirm.style.borderColor = 'var(--danger)';
+                setTimeout(() => confirm.style.borderColor = '', 1000);
+                return;
+            }
+            
+            const btn = this.querySelector('.auth-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 注册中...';
+            
+            setTimeout(() => {
+                document.querySelector('.auth-form').style.display = 'none';
+                document.querySelector('.divider').style.display = 'none';
+                document.querySelector('.social-login').style.display = 'none';
+                document.querySelector('.auth-footer').style.display = 'none';
+                
+                const msg = document.createElement('div');
+                msg.className = 'success-message show';
+                msg.innerHTML = '<div class="success-icon"><i class="fas fa-check"></i></div><h3>注册成功！</h3><p>正在跳转到控制台...</p>';
+                document.querySelector('.auth-form-section').appendChild(msg);
+                
+                setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+            }, 1200);
+        });
+        
+        function socialReg(provider) {
+            event.currentTarget.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            setTimeout(() => { window.location.href = 'index.html'; }, 800);
+        }
+    </script>
+</body>
+</html>

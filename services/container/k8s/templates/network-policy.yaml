@@ -1,0 +1,129 @@
+# Default Network Policy Template for DevBox Environments
+# This template provides complete network isolation between DevBox environments
+
+---
+# Default deny all traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: ${NAMESPACE}
+  labels:
+    devbox.clouddevbox.io/managed: "true"
+    devbox.clouddevbox.io/policy: "default-deny"
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+
+---
+# Allow DNS resolution
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: ${NAMESPACE}
+  labels:
+    devbox.clouddevbox.io/managed: "true"
+    devbox.clouddevbox.io/policy: "allow-dns"
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+---
+# Allow egress to internet (HTTP/HTTPS)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-internet-egress
+  namespace: ${NAMESPACE}
+  labels:
+    devbox.clouddevbox.io/managed: "true"
+    devbox.clouddevbox.io/policy: "allow-internet"
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 22  # Git SSH
+
+---
+# Allow ingress from gateway for SSH
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ssh-ingress
+  namespace: ${NAMESPACE}
+  labels:
+    devbox.clouddevbox.io/managed: "true"
+    devbox.clouddevbox.io/policy: "allow-ssh"
+spec:
+  podSelector:
+    matchLabels:
+      devbox.clouddevbox.io/devbox: ${DEVBOX_ID}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              devbox.clouddevbox.io/component: gateway
+      ports:
+        - protocol: TCP
+          port: 22
+
+---
+# Allow ingress from ingress controller for web traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-web-ingress
+  namespace: ${NAMESPACE}
+  labels:
+    devbox.clouddevbox.io/managed: "true"
+    devbox.clouddevbox.io/policy: "allow-web"
+spec:
+  podSelector:
+    matchLabels:
+      devbox.clouddevbox.io/devbox: ${DEVBOX_ID}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3000
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 8000
+        - protocol: TCP
+          port: 5000

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  English (US) localization for Cloud DevBox installer
+-->
+<WixLocalization Culture="en-US" xmlns="http://schemas.microsoft.com/wix/2006/localization">
+  <String Id="Language">1033</String>
+  <String Id="ProductName">Cloud DevBox</String>
+  <String Id="ProductDescription">A desktop client for managing cloud development environments</String>
+  <String Id="ManufacturerName">Cloud DevBox Team</String>
+  
+  <!-- Installation messages -->
+  <String Id="WelcomeTitle">Welcome to Cloud DevBox Setup</String>
+  <String Id="WelcomeDescription">This wizard will guide you through the installation of Cloud DevBox, a powerful desktop client for managing cloud development environments.</String>
+  
+  <String Id="InstallDirTitle">Choose Install Location</String>
+  <String Id="InstallDirDescription">Choose the folder in which to install Cloud DevBox.</String>
+  
+  <String Id="FinishTitle">Installation Complete</String>
+  <String Id="FinishDescription">Cloud DevBox has been successfully installed. Click Finish to exit the wizard.</String>
+  
+  <!-- Error messages -->
+  <String Id="DowngradeError">A newer version of Cloud DevBox is already installed. Please uninstall it first before installing an older version.</String>
+  <String Id="InstallError">An error occurred during installation. Please try again or contact support.</String>
+  
+  <!-- Feature descriptions -->
+  <String Id="FeatureMainTitle">Cloud DevBox Application</String>
+  <String Id="FeatureMainDescription">The main Cloud DevBox desktop application and all required components.</String>
+  
+  <!-- Shortcut names -->
+  <String Id="ShortcutStartMenu">Cloud DevBox</String>
+  <String Id="ShortcutDesktop">Cloud DevBox</String>
+  <String Id="ShortcutUninstall">Uninstall Cloud DevBox</String>
+</WixLocalization>

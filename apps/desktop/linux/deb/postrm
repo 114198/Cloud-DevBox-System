@@ -1,0 +1,36 @@
+#!/bin/bash
+# Cloud DevBox Debian Post-Removal Script
+
+set -e
+
+# Update desktop database
+if command -v update-desktop-database &> /dev/null; then
+    update-desktop-database -q /usr/share/applications || true
+fi
+
+# Update icon cache
+if command -v gtk-update-icon-cache &> /dev/null; then
+    gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor || true
+fi
+
+# Update MIME database
+if command -v update-mime-database &> /dev/null; then
+    update-mime-database /usr/share/mime || true
+fi
+
+# Clean up user config on purge
+if [ "$1" = "purge" ]; then
+    # Remove user configuration directories
+    for user_home in /home/*; do
+        if [ -d "$user_home" ]; then
+            rm -rf "$user_home/.config/cloud-devbox" 2>/dev/null || true
+            rm -rf "$user_home/.local/share/cloud-devbox" 2>/dev/null || true
+        fi
+    done
+    
+    # Remove root config if exists
+    rm -rf /root/.config/cloud-devbox 2>/dev/null || true
+    rm -rf /root/.local/share/cloud-devbox 2>/dev/null || true
+fi
+
+exit 0

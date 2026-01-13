@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Cloud DevBox macOS Application Info.plist
+  Additional configuration for the macOS application bundle
+-->
+<plist version="1.0">
+<dict>
+    <!-- Bundle identification -->
+    <key>CFBundleIdentifier</key>
+    <string>io.devbox.desktop</string>
+    
+    <key>CFBundleName</key>
+    <string>Cloud DevBox</string>
+    
+    <key>CFBundleDisplayName</key>
+    <string>Cloud DevBox</string>
+    
+    <key>CFBundleExecutable</key>
+    <string>Cloud DevBox</string>
+    
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+    
+    <!-- Minimum macOS version -->
+    <key>LSMinimumSystemVersion</key>
+    <string>10.15</string>
+    
+    <!-- High resolution support -->
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    
+    <!-- Supports both Intel and Apple Silicon -->
+    <key>LSArchitecturePriority</key>
+    <array>
+        <string>arm64</string>
+        <string>x86_64</string>
+    </array>
+    
+    <!-- URL scheme handler: devbox:// -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>DevBox Protocol</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>devbox</string>
+            </array>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+        </dict>
+    </array>
+    
+    <!-- File type associations -->
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>DevBox Environment</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>devbox</string>
+            </array>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>io.devbox.environment</string>
+            </array>
+        </dict>
+    </array>
+    
+    <!-- UTI declarations -->
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>io.devbox.environment</string>
+            <key>UTTypeDescription</key>
+            <string>DevBox Environment Configuration</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.yaml</string>
+                <string>public.text</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>devbox</string>
+                </array>
+            </dict>
+        </dict>
+    </array>
+    
+    <!-- Privacy usage descriptions -->
+    <key>NSCameraUsageDescription</key>
+    <string>Cloud DevBox needs camera access for video meetings and collaboration.</string>
+    
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Cloud DevBox needs microphone access for audio meetings and collaboration.</string>
+    
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Cloud DevBox needs automation access to integrate with your IDE.</string>
+    
+    <key>NSScreenCaptureUsageDescription</key>
+    <string>Cloud DevBox needs screen capture access for screen sharing during meetings.</string>
+    
+    <!-- Application category -->
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.developer-tools</string>
+    
+    <!-- Sparkle auto-update framework -->
+    <key>SUFeedURL</key>
+    <string>https://releases.devbox.io/macos/appcast.xml</string>
+    
+    <key>SUPublicEDKey</key>
+    <string>YOUR_SPARKLE_PUBLIC_KEY</string>
+    
+    <!-- Dock and menu bar -->
+    <key>LSUIElement</key>
+    <false/>
+    
+    <!-- Background modes -->
+    <key>NSSupportsAutomaticTermination</key>
+    <false/>
+    
+    <key>NSSupportsSuddenTermination</key>
+    <false/>
+</dict>
+</plist>

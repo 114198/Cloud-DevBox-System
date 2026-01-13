@@ -1,0 +1,56 @@
+[package]
+name = "devbox-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Cloud DevBox CLI - Manage your cloud development environments"
+
+[[bin]]
+name = "devbox"
+path = "src/main.rs"
+
+[dependencies]
+tokio.workspace = true
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+reqwest.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+config.workspace = true
+dotenvy.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+
+# Shell completions
+clap_complete = "4.4"
+
+devbox-shared = { path = "../../packages/shared" }
+
+# Terminal UI
+crossterm = "0.27"
+indicatif = "0.17"
+console = "0.15"
+dialoguer = "0.11"
+colored = "2.1"
+tabled = "0.15"
+
+# Keyring for secure credential storage
+keyring = "2.3"
+
+# File system
+dirs = "5.0"
+
+# URL handling
+url = "2.5"
+
+# Open browser
+open = "5.0"
+
+[dev-dependencies]
+mockall.workspace = true
+tempfile = "3.10"
+wiremock = "0.6"

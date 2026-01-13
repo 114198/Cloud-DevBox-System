@@ -1,0 +1,17 @@
+Package: devbox-cli
+Version: 0.1.0
+Section: devel
+Priority: optional
+Architecture: amd64
+Maintainer: Cloud DevBox Team <team@devbox.io>
+Description: Cloud DevBox CLI - Manage your cloud development environments
+ DevBox CLI provides a command-line interface for managing cloud development
+ environments. Create, start, stop, and connect to your development
+ environments from anywhere.
+ .
+ Features:
+  - Create and manage cloud development environments
+  - SSH into environments directly
+  - Template-based environment creation
+  - Cross-platform support
+Homepage: https://github.com/your-org/cloud-devbox

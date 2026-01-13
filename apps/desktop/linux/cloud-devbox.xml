@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Cloud DevBox MIME Type Definition
+  Registers the .devbox file extension with the system
+-->
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-devbox">
+    <comment>DevBox Environment Configuration</comment>
+    <comment xml:lang="zh_CN">DevBox 环境配置</comment>
+    <glob pattern="*.devbox"/>
+    <icon name="cloud-devbox"/>
+    <sub-class-of type="text/yaml"/>
+  </mime-type>
+</mime-info>
