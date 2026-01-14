@@ -20,6 +20,11 @@ func NewEnvironmentHandler(service *services.EnvironmentService) *EnvironmentHan
 	return &EnvironmentHandler{service: service}
 }
 
+// GetService exposes the underlying environment service.
+func (h *EnvironmentHandler) GetService() *services.EnvironmentService {
+	return h.service
+}
+
 // Create handles POST /api/v1/environments
 func (h *EnvironmentHandler) Create(c *gin.Context) {
 	var req models.CreateEnvironmentRequest
