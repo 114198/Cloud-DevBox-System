@@ -8,8 +8,11 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 // HealthResponse represents the health check response
@@ -131,15 +134,115 @@ func GetTemplate(c *gin.Context) {
 	c.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
 }
 
-// Project handlers (placeholders)
-func ListProjects(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"data": []interface{}{}}) }
+// Project handlers
+type Project struct {
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description,omitempty"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+var (
+	projectStore   = make(map[string]*Project)
+	projectStoreMu sync.RWMutex
+)
+
+func ListProjects(c *gin.Context) {
+	projectStoreMu.RLock()
+	defer projectStoreMu.RUnlock()
+
+	projects := make([]*Project, 0, len(projectStore))
+	for _, project := range projectStore {
+		projects = append(projects, project)
+	}
+	c.JSON(http.StatusOK, gin.H{"data": projects})
+}
+
 func CreateProject(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
+	var req struct {
+		Name        string `json:"name" binding:"required"`
+		Description string `json:"description"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	now := time.Now()
+	project := &Project{
+		ID:          uuid.New().String(),
+		Name:        req.Name,
+		Description: req.Description,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+
+	projectStoreMu.Lock()
+	projectStore[project.ID] = project
+	projectStoreMu.Unlock()
+
+	c.JSON(http.StatusCreated, project)
 }
-func GetProject(c *gin.Context) { c.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"}) }
+
+func GetProject(c *gin.Context) {
+	id := c.Param("id")
+
+	projectStoreMu.RLock()
+	project, ok := projectStore[id]
+	projectStoreMu.RUnlock()
+	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, project)
+}
+
 func UpdateProject(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
+	id := c.Param("id")
+	var req struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	projectStoreMu.Lock()
+	project, ok := projectStore[id]
+	if !ok {
+		projectStoreMu.Unlock()
+		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+		return
+	}
+	if req.Name != "" {
+		project.Name = req.Name
+	}
+	if req.Description != "" {
+		project.Description = req.Description
+	}
+	project.UpdatedAt = time.Now()
+	projectStoreMu.Unlock()
+
+	c.JSON(http.StatusOK, project)
 }
+
 func DeleteProject(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
+	id := c.Param("id")
+
+	projectStoreMu.Lock()
+	_, ok := projectStore[id]
+	if ok {
+		delete(projectStore, id)
+	}
+	projectStoreMu.Unlock()
+
+	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
