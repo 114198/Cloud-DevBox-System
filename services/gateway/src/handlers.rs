@@ -13,7 +13,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-use crate::auth::{AuthUser, JwtService};
+use crate::auth::AuthUser;
 use crate::error::GatewayError;
 use crate::state::AppState;
 
@@ -371,10 +371,40 @@ pub async fn refresh_token(
 ) -> Result<Json<crate::auth::TokenPair>, GatewayError> {
     tracing::debug!("Token refresh attempt");
 
-    let jwt_service = JwtService::new(state.config.jwt.clone());
-    let token_pair = jwt_service.refresh_tokens(&payload.refresh_token)?;
+    let core_url = format!("{}/api/v1/auth/refresh", state.config.services.core.url);
+    let response = state
+        .http_client
+        .post(core_url)
+        .json(&payload)
+        .send()
+        .await
+        .map_err(|err| GatewayError::ServiceUnavailable(err.to_string()))?;
 
-    Ok(Json(token_pair))
+    if !response.status().is_success() {
+        let details = response.text().await.unwrap_or_default();
+        return Err(GatewayError::UpstreamError {
+            service: "core".to_string(),
+            message: details,
+        });
+    }
+
+    let core_tokens: CoreTokenResponse = response
+        .json()
+        .await
+        .map_err(|err| GatewayError::UpstreamError {
+            service: "core".to_string(),
+            message: err.to_string(),
+        })?;
+
+    Ok(Json(crate::auth::TokenPair {
+        access_token: core_tokens.access_token,
+        refresh_token: core_tokens.refresh_token,
+        token_type: core_tokens.token_type,
+        expires_in: expires_in_from_core(
+            &core_tokens.expires_at,
+            state.config.jwt.access_token_expiry_secs as i64,
+        ),
+    }))
 }
 
 /// Get current user handler - GET /api/v1/users/me
