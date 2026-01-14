@@ -47,14 +47,16 @@ func RegisterEnvironmentRoutes(router *gin.RouterGroup, envService *services.Env
 	router.POST("/environments/batch", handler.BatchOperation)
 }
 
-// Container handlers (placeholders)
-func CreateContainer(c *gin.Context)  { c.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"}) }
-func GetContainer(c *gin.Context)     { c.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"}) }
-func DeleteContainer(c *gin.Context)  { c.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"}) }
-func StartContainer(c *gin.Context)   { c.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"}) }
-func StopContainer(c *gin.Context)    { c.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"}) }
-func RestartContainer(c *gin.Context) { c.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"}) }
-func GetContainerLogs(c *gin.Context) { c.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"}) }
-func GetContainerMetrics(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
+// RegisterLegacyContainerRoutes maps legacy /containers endpoints to environments.
+func RegisterLegacyContainerRoutes(router *gin.RouterGroup, envService *services.EnvironmentService) {
+	handler := NewEnvironmentHandler(envService)
+
+	router.POST("", handler.Create)
+	router.GET("/:id", handler.Get)
+	router.DELETE("/:id", handler.Delete)
+	router.POST("/:id/start", handler.Start)
+	router.POST("/:id/stop", handler.Stop)
+	router.POST("/:id/restart", handler.Restart)
+	router.GET("/:id/logs", handler.GetLogs)
+	router.GET("/:id/metrics", handler.GetMetrics)
 }

@@ -1,5 +1,5 @@
 // Preview service API client
-import { api } from './api';
+import api from './api';
 
 // Types
 export interface Domain {

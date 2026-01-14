@@ -4,40 +4,38 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
+	"go.uber.org/zap"
 	"net"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/cloud-devbox/services/container/internal/models"
-	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
 // CustomDomainServiceConfig holds configuration for the custom domain service
 type CustomDomainServiceConfig struct {
-	CNAMETarget           string
-	VerificationTimeout   time.Duration
-	DNSCheckInterval      time.Duration
+	CNAMETarget             string
+	VerificationTimeout     time.Duration
+	DNSCheckInterval        time.Duration
 	MaxVerificationAttempts int
-	SSLProvisioningTimeout time.Duration
+	SSLProvisioningTimeout  time.Duration
 }
 
 // DefaultCustomDomainServiceConfig returns default configuration
 func DefaultCustomDomainServiceConfig() *CustomDomainServiceConfig {
 	return &CustomDomainServiceConfig{
-		CNAMETarget:           "proxy.devbox.com",
-		VerificationTimeout:   5 * time.Minute,
-		DNSCheckInterval:      10 * time.Second,
+		CNAMETarget:             "proxy.devbox.com",
+		VerificationTimeout:     5 * time.Minute,
+		DNSCheckInterval:        10 * time.Second,
 		MaxVerificationAttempts: 30,
-		SSLProvisioningTimeout: 10 * time.Minute,
+		SSLProvisioningTimeout:  10 * time.Minute,
 	}
 }
 
 // CustomDomainService handles custom domain operations
 type CustomDomainService struct {
-	config     *CustomDomainServiceConfig
-	logger     *zap.Logger
+	config      *CustomDomainServiceConfig
+	logger      *zap.Logger
 	certManager *CertificateManager
 
 	// Verification jobs
@@ -47,16 +45,16 @@ type CustomDomainService struct {
 
 // VerificationJob represents an ongoing domain verification
 type VerificationJob struct {
-	ID            string
-	DomainID      string
-	Domain        string
-	Status        string // "pending", "verifying", "verified", "failed"
-	Attempts      int
-	StartedAt     time.Time
-	CompletedAt   *time.Time
-	Error         string
-	DNSRecords    []DNSCheckResult
-	SSLStatus     string
+	ID          string
+	DomainID    string
+	Domain      string
+	Status      string // "pending", "verifying", "verified", "failed"
+	Attempts    int
+	StartedAt   time.Time
+	CompletedAt *time.Time
+	Error       string
+	DNSRecords  []DNSCheckResult
+	SSLStatus   string
 }
 
 // DNSCheckResult represents the result of a DNS check
@@ -155,7 +153,7 @@ func (s *CustomDomainService) runVerification(job *VerificationJob) {
 
 			// Check DNS records
 			result := s.checkDNS(job.Domain)
-			
+
 			s.mu.Lock()
 			job.DNSRecords = append(job.DNSRecords, result)
 			s.mu.Unlock()

@@ -3,7 +3,7 @@
  * Handles payment operations including Alipay and WeChat Pay integration
  */
 
-import { api } from './api';
+import api from './api';
 
 // Types
 export interface Payment {

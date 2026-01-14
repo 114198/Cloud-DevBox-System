@@ -14,12 +14,12 @@ import (
 
 // Server represents the HTTP server
 type Server struct {
-	router              *gin.Engine
-	config              *config.Config
-	environmentHandler  *handlers.EnvironmentHandler
-	monitoringHandler   *handlers.MonitoringHandler
-	monitoringService   *services.MonitoringService
-	logger              *zap.Logger
+	router             *gin.Engine
+	config             *config.Config
+	environmentHandler *handlers.EnvironmentHandler
+	monitoringHandler  *handlers.MonitoringHandler
+	monitoringService  *services.MonitoringService
+	logger             *zap.Logger
 }
 
 // New creates a new server instance
@@ -58,12 +58,12 @@ func New(cfg *config.Config) (*Server, error) {
 	monitoringHandler := handlers.NewMonitoringHandler(monitoringService)
 
 	s := &Server{
-		router:              router,
-		config:              cfg,
-		environmentHandler:  envHandler,
-		monitoringHandler:   monitoringHandler,
-		monitoringService:   monitoringService,
-		logger:              logger,
+		router:             router,
+		config:             cfg,
+		environmentHandler: envHandler,
+		monitoringHandler:  monitoringHandler,
+		monitoringService:  monitoringService,
+		logger:             logger,
 	}
 
 	s.setupRoutes()
@@ -123,14 +123,7 @@ func (s *Server) setupRoutes() {
 		// Legacy container routes (for backward compatibility)
 		containers := v1.Group("/containers")
 		{
-			containers.POST("", handlers.CreateContainer)
-			containers.GET("/:id", handlers.GetContainer)
-			containers.DELETE("/:id", handlers.DeleteContainer)
-			containers.POST("/:id/start", handlers.StartContainer)
-			containers.POST("/:id/stop", handlers.StopContainer)
-			containers.POST("/:id/restart", handlers.RestartContainer)
-			containers.GET("/:id/logs", handlers.GetContainerLogs)
-			containers.GET("/:id/metrics", handlers.GetContainerMetrics)
+			handlers.RegisterLegacyContainerRoutes(containers, s.environmentHandler.GetService())
 		}
 	}
 }

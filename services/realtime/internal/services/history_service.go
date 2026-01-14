@@ -3,6 +3,9 @@ package services
 
 import (
 	"context"
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -30,17 +33,25 @@ type HistoryService struct {
 	// History index by session ID -> operation ID -> index
 	historyIndex map[string]map[string]int
 
+	// Optional persistence file path
+	filePath string
+
 	mu     sync.RWMutex
 	logger *zap.Logger
 }
 
 // NewHistoryService creates a new history service
 func NewHistoryService(logger *zap.Logger) *HistoryService {
-	return &HistoryService{
+	service := &HistoryService{
 		history:      make(map[string][]*models.CollaborationHistory),
 		historyIndex: make(map[string]map[string]int),
+		filePath:     os.Getenv("COLLAB_HISTORY_PATH"),
 		logger:       logger,
 	}
+	if service.filePath != "" {
+		service.loadFromDisk()
+	}
+	return service
 }
 
 // RecordOperation records an operation in the history
@@ -75,6 +86,8 @@ func (s *HistoryService) RecordOperation(sessionID string, userID uuid.UUID, ope
 	index := len(s.history[sessionID])
 	s.history[sessionID] = append(s.history[sessionID], entry)
 	s.historyIndex[sessionID][entry.ID.String()] = index
+
+	s.persistToDiskLocked()
 
 	return entry
 }
@@ -156,7 +169,6 @@ func (s *HistoryService) GetHistoryByUser(sessionID string, userID uuid.UUID, li
 
 	return result
 }
-
 
 // GetHistoryByTimeRange gets history entries within a time range
 func (s *HistoryService) GetHistoryByTimeRange(sessionID string, startTime, endTime time.Time, limit int) []*models.CollaborationHistory {
@@ -243,9 +255,64 @@ func (s *HistoryService) CleanupOldHistory() int {
 		s.logger.Info("Cleaned up old history entries",
 			zap.Int("removedCount", totalRemoved),
 		)
+		s.persistToDiskLocked()
 	}
 
 	return totalRemoved
+}
+
+func (s *HistoryService) loadFromDisk() {
+	if s.filePath == "" {
+		return
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	data, err := os.ReadFile(s.filePath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			s.logger.Warn("Failed to read history file", zap.Error(err))
+		}
+		return
+	}
+
+	var stored map[string][]*models.CollaborationHistory
+	if err := json.Unmarshal(data, &stored); err != nil {
+		s.logger.Warn("Failed to parse history file", zap.Error(err))
+		return
+	}
+
+	s.history = stored
+	for sessionID := range s.history {
+		s.rebuildIndex(sessionID)
+	}
+}
+
+func (s *HistoryService) persistToDiskLocked() {
+	if s.filePath == "" {
+		return
+	}
+
+	data, err := json.MarshalIndent(s.history, "", "  ")
+	if err != nil {
+		s.logger.Warn("Failed to serialize history", zap.Error(err))
+		return
+	}
+
+	if err := os.MkdirAll(filepath.Dir(s.filePath), 0o755); err != nil {
+		s.logger.Warn("Failed to create history directory", zap.Error(err))
+		return
+	}
+
+	tmpPath := s.filePath + ".tmp"
+	if err := os.WriteFile(tmpPath, data, 0o600); err != nil {
+		s.logger.Warn("Failed to write history file", zap.Error(err))
+		return
+	}
+	if err := os.Rename(tmpPath, s.filePath); err != nil {
+		s.logger.Warn("Failed to persist history file", zap.Error(err))
+	}
 }
 
 // StartCleanupRoutine starts a background routine to clean up old history
@@ -291,12 +358,12 @@ func (s *HistoryService) ImportHistory(sessionID string, entries []*models.Colla
 
 // GetSessionStats returns statistics about a session's history
 type SessionHistoryStats struct {
-	TotalOperations   int            `json:"totalOperations"`
-	OperationsByType  map[string]int `json:"operationsByType"`
-	OperationsByUser  map[string]int `json:"operationsByUser"`
-	OperationsByFile  map[string]int `json:"operationsByFile"`
-	FirstOperation    *time.Time     `json:"firstOperation,omitempty"`
-	LastOperation     *time.Time     `json:"lastOperation,omitempty"`
+	TotalOperations  int            `json:"totalOperations"`
+	OperationsByType map[string]int `json:"operationsByType"`
+	OperationsByUser map[string]int `json:"operationsByUser"`
+	OperationsByFile map[string]int `json:"operationsByFile"`
+	FirstOperation   *time.Time     `json:"firstOperation,omitempty"`
+	LastOperation    *time.Time     `json:"lastOperation,omitempty"`
 }
 
 // GetSessionStats gets statistics about a session's history

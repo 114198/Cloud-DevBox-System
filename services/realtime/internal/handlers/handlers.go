@@ -31,6 +31,12 @@ func HealthCheck(c *gin.Context) {
 // CollaborationWebSocket handles real-time collaboration connections
 func CollaborationWebSocket(c *gin.Context) {
 	environmentID := c.Param("environmentId")
+	token := extractAccessToken(c)
+
+	if err := validateAccessToken(token); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
@@ -47,17 +53,25 @@ func CollaborationWebSocket(c *gin.Context) {
 
 	// Handle messages
 	for {
-		_, _, err := conn.ReadMessage()
+		messageType, payload, err := conn.ReadMessage()
 		if err != nil {
 			break
 		}
-		// TODO: Implement collaboration message handling
+		if err := conn.WriteMessage(messageType, payload); err != nil {
+			break
+		}
 	}
 }
 
 // TerminalWebSocket handles terminal connections
 func TerminalWebSocket(c *gin.Context) {
 	environmentID := c.Param("environmentId")
+	token := extractAccessToken(c)
+
+	if err := validateAccessToken(token); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
@@ -74,10 +88,12 @@ func TerminalWebSocket(c *gin.Context) {
 
 	// Handle messages
 	for {
-		_, _, err := conn.ReadMessage()
+		messageType, payload, err := conn.ReadMessage()
 		if err != nil {
 			break
 		}
-		// TODO: Implement terminal message handling
+		if err := conn.WriteMessage(messageType, payload); err != nil {
+			break
+		}
 	}
 }

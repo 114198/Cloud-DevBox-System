@@ -9,10 +9,11 @@ use axum::{
     response::IntoResponse,
     Json,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-use crate::auth::{AuthUser, JwtService};
+use crate::auth::AuthUser;
 use crate::error::GatewayError;
 use crate::state::AppState;
 
@@ -213,6 +214,39 @@ pub struct UserInfo {
     pub role: String,
 }
 
+#[derive(Debug, Deserialize)]
+struct CoreTokenResponse {
+    access_token: String,
+    refresh_token: String,
+    expires_at: String,
+    token_type: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct CoreUserResponse {
+    id: String,
+    email: String,
+    username: String,
+    role: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct CoreAuthResponse {
+    user: CoreUserResponse,
+    tokens: CoreTokenResponse,
+}
+
+fn expires_in_from_core(expires_at: &str, fallback: i64) -> i64 {
+    if let Ok(parsed) = DateTime::parse_from_rfc3339(expires_at) {
+        let now = Utc::now();
+        let remaining = parsed.with_timezone(&Utc).signed_duration_since(now).num_seconds();
+        if remaining > 0 {
+            return remaining;
+        }
+    }
+    fallback
+}
+
 /// Register request body
 #[derive(Debug, Deserialize)]
 pub struct RegisterRequest {
@@ -235,36 +269,46 @@ pub async fn login(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<LoginRequest>,
 ) -> Result<Json<LoginResponse>, GatewayError> {
-    // TODO: In production, validate credentials against the core service
-    // For now, we'll proxy to the core service for actual authentication
-    
-    // This is a placeholder that demonstrates the JWT flow
-    // In a real implementation, you would:
-    // 1. Call the core service to validate credentials
-    // 2. Get user info from the response
-    // 3. Generate JWT tokens
-    
     tracing::info!(email = %payload.email, "Login attempt");
 
-    // For demonstration, generate tokens (in production, validate first)
-    let jwt_service = JwtService::new(state.config.jwt.clone());
-    
-    // Placeholder user ID - in production, this comes from the database
-    let user_id = uuid::Uuid::new_v4().to_string();
-    let role = "developer";
-    
-    let token_pair = jwt_service.generate_token_pair(&user_id, &payload.email, role)?;
+    let core_url = format!("{}/api/v1/auth/login", state.config.services.core.url);
+    let response = state
+        .http_client
+        .post(core_url)
+        .json(&payload)
+        .send()
+        .await
+        .map_err(|err| GatewayError::ServiceUnavailable(err.to_string()))?;
+
+    if !response.status().is_success() {
+        let details = response.text().await.unwrap_or_default();
+        return Err(GatewayError::UpstreamError {
+            service: "core".to_string(),
+            message: details,
+        });
+    }
+
+    let core_response: CoreAuthResponse = response
+        .json()
+        .await
+        .map_err(|err| GatewayError::UpstreamError {
+            service: "core".to_string(),
+            message: err.to_string(),
+        })?;
 
     Ok(Json(LoginResponse {
-        access_token: token_pair.access_token,
-        refresh_token: token_pair.refresh_token,
-        token_type: token_pair.token_type,
-        expires_in: token_pair.expires_in,
+        access_token: core_response.tokens.access_token,
+        refresh_token: core_response.tokens.refresh_token,
+        token_type: core_response.tokens.token_type,
+        expires_in: expires_in_from_core(
+            &core_response.tokens.expires_at,
+            state.config.jwt.access_token_expiry_secs as i64,
+        ),
         user: UserInfo {
-            id: user_id,
-            email: payload.email,
-            username: "user".to_string(), // Placeholder
-            role: role.to_string(),
+            id: core_response.user.id,
+            email: core_response.user.email,
+            username: core_response.user.username,
+            role: core_response.user.role,
         },
     }))
 }
@@ -278,25 +322,44 @@ pub async fn register(
 ) -> Result<Json<LoginResponse>, GatewayError> {
     tracing::info!(email = %payload.email, username = %payload.username, "Registration attempt");
 
-    // TODO: In production, create user via core service
-    // For now, generate tokens for the new user
-    
-    let jwt_service = JwtService::new(state.config.jwt.clone());
-    let user_id = uuid::Uuid::new_v4().to_string();
-    let role = "developer";
-    
-    let token_pair = jwt_service.generate_token_pair(&user_id, &payload.email, role)?;
+    let core_url = format!("{}/api/v1/auth/register", state.config.services.core.url);
+    let response = state
+        .http_client
+        .post(core_url)
+        .json(&payload)
+        .send()
+        .await
+        .map_err(|err| GatewayError::ServiceUnavailable(err.to_string()))?;
+
+    if !response.status().is_success() {
+        let details = response.text().await.unwrap_or_default();
+        return Err(GatewayError::UpstreamError {
+            service: "core".to_string(),
+            message: details,
+        });
+    }
+
+    let core_response: CoreAuthResponse = response
+        .json()
+        .await
+        .map_err(|err| GatewayError::UpstreamError {
+            service: "core".to_string(),
+            message: err.to_string(),
+        })?;
 
     Ok(Json(LoginResponse {
-        access_token: token_pair.access_token,
-        refresh_token: token_pair.refresh_token,
-        token_type: token_pair.token_type,
-        expires_in: token_pair.expires_in,
+        access_token: core_response.tokens.access_token,
+        refresh_token: core_response.tokens.refresh_token,
+        token_type: core_response.tokens.token_type,
+        expires_in: expires_in_from_core(
+            &core_response.tokens.expires_at,
+            state.config.jwt.access_token_expiry_secs as i64,
+        ),
         user: UserInfo {
-            id: user_id,
-            email: payload.email,
-            username: payload.username,
-            role: role.to_string(),
+            id: core_response.user.id,
+            email: core_response.user.email,
+            username: core_response.user.username,
+            role: core_response.user.role,
         },
     }))
 }
@@ -308,10 +371,40 @@ pub async fn refresh_token(
 ) -> Result<Json<crate::auth::TokenPair>, GatewayError> {
     tracing::debug!("Token refresh attempt");
 
-    let jwt_service = JwtService::new(state.config.jwt.clone());
-    let token_pair = jwt_service.refresh_tokens(&payload.refresh_token)?;
+    let core_url = format!("{}/api/v1/auth/refresh", state.config.services.core.url);
+    let response = state
+        .http_client
+        .post(core_url)
+        .json(&payload)
+        .send()
+        .await
+        .map_err(|err| GatewayError::ServiceUnavailable(err.to_string()))?;
 
-    Ok(Json(token_pair))
+    if !response.status().is_success() {
+        let details = response.text().await.unwrap_or_default();
+        return Err(GatewayError::UpstreamError {
+            service: "core".to_string(),
+            message: details,
+        });
+    }
+
+    let core_tokens: CoreTokenResponse = response
+        .json()
+        .await
+        .map_err(|err| GatewayError::UpstreamError {
+            service: "core".to_string(),
+            message: err.to_string(),
+        })?;
+
+    Ok(Json(crate::auth::TokenPair {
+        access_token: core_tokens.access_token,
+        refresh_token: core_tokens.refresh_token,
+        token_type: core_tokens.token_type,
+        expires_in: expires_in_from_core(
+            &core_tokens.expires_at,
+            state.config.jwt.access_token_expiry_secs as i64,
+        ),
+    }))
 }
 
 /// Get current user handler - GET /api/v1/users/me

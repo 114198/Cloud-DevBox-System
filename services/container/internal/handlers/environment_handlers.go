@@ -20,14 +20,9 @@ func NewEnvironmentHandler(service *services.EnvironmentService) *EnvironmentHan
 	return &EnvironmentHandler{service: service}
 }
 
-// getUserID extracts the user ID from the request context
-func getUserID(c *gin.Context) string {
-	// In production, this would come from JWT token
-	userID := c.GetHeader("X-User-ID")
-	if userID == "" {
-		userID = "anonymous"
-	}
-	return userID
+// GetService exposes the underlying environment service.
+func (h *EnvironmentHandler) GetService() *services.EnvironmentService {
+	return h.service
 }
 
 // Create handles POST /api/v1/environments

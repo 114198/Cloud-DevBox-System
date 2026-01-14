@@ -10,6 +10,9 @@ export interface CreateEnvironmentRequest {
     memory: string
     storage: string
   }
+  environment?: Array<{ name: string; value: string }>
+  ports?: Array<{ containerPort: number; protocol?: string; name?: string }>
+  sshPublicKey?: string
 }
 
 export interface EnvironmentStats {

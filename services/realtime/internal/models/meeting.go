@@ -39,51 +39,50 @@ const (
 type SignalingMessageType string
 
 const (
-	SignalTypeOffer        SignalingMessageType = "offer"
-	SignalTypeAnswer       SignalingMessageType = "answer"
-	SignalTypeCandidate    SignalingMessageType = "ice-candidate"
-	SignalTypeJoin         SignalingMessageType = "join"
-	SignalTypeLeave        SignalingMessageType = "leave"
-	SignalTypeMute         SignalingMessageType = "mute"
-	SignalTypeUnmute       SignalingMessageType = "unmute"
-	SignalTypeScreenShare  SignalingMessageType = "screen-share"
-	SignalTypeStopShare    SignalingMessageType = "stop-share"
+	SignalTypeOffer         SignalingMessageType = "offer"
+	SignalTypeAnswer        SignalingMessageType = "answer"
+	SignalTypeCandidate     SignalingMessageType = "ice-candidate"
+	SignalTypeJoin          SignalingMessageType = "join"
+	SignalTypeLeave         SignalingMessageType = "leave"
+	SignalTypeMute          SignalingMessageType = "mute"
+	SignalTypeUnmute        SignalingMessageType = "unmute"
+	SignalTypeScreenShare   SignalingMessageType = "screen-share"
+	SignalTypeStopShare     SignalingMessageType = "stop-share"
 	SignalTypeQualityChange SignalingMessageType = "quality-change"
-	SignalTypeRecordStart  SignalingMessageType = "record-start"
-	SignalTypeRecordStop   SignalingMessageType = "record-stop"
-	SignalTypeError        SignalingMessageType = "error"
-	SignalTypeUserJoined   SignalingMessageType = "user-joined"
-	SignalTypeUserLeft     SignalingMessageType = "user-left"
-	SignalTypeMediaState   SignalingMessageType = "media-state"
+	SignalTypeRecordStart   SignalingMessageType = "record-start"
+	SignalTypeRecordStop    SignalingMessageType = "record-stop"
+	SignalTypeError         SignalingMessageType = "error"
+	SignalTypeUserJoined    SignalingMessageType = "user-joined"
+	SignalTypeUserLeft      SignalingMessageType = "user-left"
+	SignalTypeMediaState    SignalingMessageType = "media-state"
 )
 
 // VideoQuality represents video quality levels
 type VideoQuality string
 
 const (
-	VideoQuality1080p    VideoQuality = "1080p"
-	VideoQuality720p     VideoQuality = "720p"
-	VideoQuality480p     VideoQuality = "480p"
-	VideoQuality360p     VideoQuality = "360p"
+	VideoQuality1080p     VideoQuality = "1080p"
+	VideoQuality720p      VideoQuality = "720p"
+	VideoQuality480p      VideoQuality = "480p"
+	VideoQuality360p      VideoQuality = "360p"
 	VideoQualityAudioOnly VideoQuality = "audio_only"
 )
 
 // Meeting represents a video/audio meeting session
 type Meeting struct {
-	ID            uuid.UUID          `json:"id"`
-	EnvironmentID uuid.UUID          `json:"environmentId"`
-	HostUserID    uuid.UUID          `json:"hostUserId"`
-	Title         string             `json:"title"`
-	Type          MeetingType        `json:"type"`
-	Status        MeetingStatus      `json:"status"`
-	Settings      MeetingSettings    `json:"settings"`
+	ID            uuid.UUID            `json:"id"`
+	EnvironmentID uuid.UUID            `json:"environmentId"`
+	HostUserID    uuid.UUID            `json:"hostUserId"`
+	Title         string               `json:"title"`
+	Type          MeetingType          `json:"type"`
+	Status        MeetingStatus        `json:"status"`
+	Settings      MeetingSettings      `json:"settings"`
 	Participants  []MeetingParticipant `json:"participants"`
-	Recording     *MeetingRecording  `json:"recording,omitempty"`
-	CreatedAt     time.Time          `json:"createdAt"`
-	StartedAt     *time.Time         `json:"startedAt,omitempty"`
-	EndedAt       *time.Time         `json:"endedAt,omitempty"`
+	Recording     *MeetingRecording    `json:"recording,omitempty"`
+	CreatedAt     time.Time            `json:"createdAt"`
+	StartedAt     *time.Time           `json:"startedAt,omitempty"`
+	EndedAt       *time.Time           `json:"endedAt,omitempty"`
 }
-
 
 // MeetingSettings represents meeting configuration settings
 type MeetingSettings struct {
@@ -179,20 +178,20 @@ type QualityChangePayload struct {
 
 // ScreenSharePayload represents screen share payload
 type ScreenSharePayload struct {
-	Action     string `json:"action"` // "start" or "stop"
-	ShareType  string `json:"shareType,omitempty"` // "screen", "window", "tab"
+	Action     string `json:"action"`               // "start" or "stop"
+	ShareType  string `json:"shareType,omitempty"`  // "screen", "window", "tab"
 	Resolution string `json:"resolution,omitempty"` // "1080p", "720p"
 	FrameRate  int    `json:"frameRate,omitempty"`
 }
 
 // CreateMeetingRequest represents a request to create a meeting
 type CreateMeetingRequest struct {
-	EnvironmentID string          `json:"environmentId" binding:"required"`
-	HostUserID    string          `json:"hostUserId" binding:"required"`
-	Title         string          `json:"title" binding:"required"`
-	Type          MeetingType     `json:"type"`
+	EnvironmentID string           `json:"environmentId" binding:"required"`
+	HostUserID    string           `json:"hostUserId" binding:"required"`
+	Title         string           `json:"title" binding:"required"`
+	Type          MeetingType      `json:"type"`
 	Settings      *MeetingSettings `json:"settings,omitempty"`
-	Invitees      []string        `json:"invitees,omitempty"`
+	Invitees      []string         `json:"invitees,omitempty"`
 }
 
 // JoinMeetingRequest represents a request to join a meeting
@@ -244,15 +243,25 @@ type MeetingError struct {
 	Details string `json:"details,omitempty"`
 }
 
+func (e *MeetingError) Error() string {
+	if e == nil {
+		return ""
+	}
+	if e.Details != "" {
+		return e.Message + ": " + e.Details
+	}
+	return e.Message
+}
+
 // Common meeting error codes
 const (
-	ErrMeetingNotFound     = "MEETING_NOT_FOUND"
-	ErrMeetingFull         = "MEETING_FULL"
-	ErrMeetingEnded        = "MEETING_ENDED"
-	ErrUnauthorized        = "UNAUTHORIZED"
-	ErrConnectionFailed    = "CONNECTION_FAILED"
-	ErrMediaAccessDenied   = "MEDIA_ACCESS_DENIED"
-	ErrScreenShareInUse    = "SCREEN_SHARE_IN_USE"
-	ErrRecordingFailed     = "RECORDING_FAILED"
-	ErrInvalidSignal       = "INVALID_SIGNAL"
+	ErrMeetingNotFound   = "MEETING_NOT_FOUND"
+	ErrMeetingFull       = "MEETING_FULL"
+	ErrMeetingEnded      = "MEETING_ENDED"
+	ErrUnauthorized      = "UNAUTHORIZED"
+	ErrConnectionFailed  = "CONNECTION_FAILED"
+	ErrMediaAccessDenied = "MEDIA_ACCESS_DENIED"
+	ErrScreenShareInUse  = "SCREEN_SHARE_IN_USE"
+	ErrRecordingFailed   = "RECORDING_FAILED"
+	ErrInvalidSignal     = "INVALID_SIGNAL"
 )
