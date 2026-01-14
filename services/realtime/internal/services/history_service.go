@@ -48,10 +48,9 @@ func NewHistoryService(logger *zap.Logger) *HistoryService {
 		filePath:     os.Getenv("COLLAB_HISTORY_PATH"),
 		logger:       logger,
 	}
-	if service.filePath == "" {
-		service.filePath = "data/collaboration_history.json"
+	if service.filePath != "" {
+		service.loadFromDisk()
 	}
-	service.loadFromDisk()
 	return service
 }
 
@@ -263,6 +262,10 @@ func (s *HistoryService) CleanupOldHistory() int {
 }
 
 func (s *HistoryService) loadFromDisk() {
+	if s.filePath == "" {
+		return
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

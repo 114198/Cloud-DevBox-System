@@ -31,7 +31,7 @@ func HealthCheck(c *gin.Context) {
 // CollaborationWebSocket handles real-time collaboration connections
 func CollaborationWebSocket(c *gin.Context) {
 	environmentID := c.Param("environmentId")
-	token := c.Query("token")
+	token := extractAccessToken(c)
 
 	if err := validateAccessToken(token); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
@@ -66,7 +66,7 @@ func CollaborationWebSocket(c *gin.Context) {
 // TerminalWebSocket handles terminal connections
 func TerminalWebSocket(c *gin.Context) {
 	environmentID := c.Param("environmentId")
-	token := c.Query("token")
+	token := extractAccessToken(c)
 
 	if err := validateAccessToken(token); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})

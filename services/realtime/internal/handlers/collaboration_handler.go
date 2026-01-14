@@ -50,7 +50,7 @@ func (h *CollaborationHandler) HandleWebSocket(c *gin.Context) {
 	username := c.Query("username")
 	displayName := c.Query("displayName")
 	avatarURL := c.Query("avatarUrl")
-	token := c.Query("token")
+	token := extractAccessToken(c)
 
 	if userID == "" || username == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "User ID and username are required"})

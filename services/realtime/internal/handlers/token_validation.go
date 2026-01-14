@@ -5,7 +5,23 @@ import (
 	"errors"
 	"os"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
+
+func extractAccessToken(c *gin.Context) string {
+	token := strings.TrimSpace(c.Query("token"))
+	if token == "" {
+		token = strings.TrimSpace(c.GetHeader("Authorization"))
+		if strings.HasPrefix(strings.ToLower(token), "bearer ") {
+			token = strings.TrimSpace(token[len("bearer "):])
+		}
+	}
+	if token == "" {
+		token = strings.TrimSpace(c.GetHeader("X-Access-Token"))
+	}
+	return token
+}
 
 func validateAccessToken(token string) error {
 	required := strings.EqualFold(os.Getenv("REALTIME_REQUIRE_TOKEN"), "true")
